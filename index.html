@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="description" content="High-performance single-line slot machine game built with PIXI.js" />
+  <meta name="theme-color" content="#1a1a2e" />
+  
+  <!-- iOS specific meta tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Slot Game" />
+  
+  <!-- Android specific meta tags -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  
+  <!-- Prevent zoom on mobile -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  
+  <title>Slot Single-Line Game</title>
+  
+  <!-- Preload critical resources -->
+  <link rel="preconnect" href="https://pixijs.io" />
+  
+  <style>
+    /* Reset and base styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Game container styles */
+    #game-container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+    }
+    
+    /* Canvas responsive styles */
+    canvas {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
+    }
+    
+    /* Loading animation */
+    .loading-spinner {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 4px solid #3282b8;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Error styles */
+    .error-message {
+      color: #ff4757;
+      text-align: center;
+      padding: 20px;
+      font-size: 1.2rem;
+    }
+    
+    /* Mobile optimizations */
+    @media (max-width: 768px) {
+      body {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+      }
+      
+      #game-container {
+        height: 100vh;
+        height: 100dvh; /* Use dynamic viewport height on supported browsers */
+      }
+    }
+    
+    /* Landscape orientation for mobile */
+    @media (orientation: landscape) and (max-height: 600px) {
+      #game-container {
+        height: 100vh;
+      }
+    }
+    
+    /* High DPI displays */
+    @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+      canvas {
+        image-rendering: auto;
+      }
+    }
+    
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: linear-gradient(135deg, #0d0d1a, #1a1a2e);
+      }
+    }
+    
+    /* Focus styles for accessibility */
+    button:focus {
+      outline: 2px solid #3282b8;
+      outline-offset: 2px;
+    }
+    
+    /* Disable context menu on long press */
+    * {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+    
+    /* Prevent text selection */
+    ::selection {
+      background: transparent;
+    }
+    
+    ::-moz-selection {
+      background: transparent;
+    }
+  </style>
+</head>
+<body>
+  <!-- Main game container -->
+  <div id="game-container">
+    <!-- Canvas will be injected here by PIXI.js -->
+  </div>
+  
+  <!-- Fallback content for when JavaScript is disabled -->
+  <noscript>
+    <div style="
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.9);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      font-family: Arial, sans-serif;
+    ">
+      <h2>JavaScript Required</h2>
+      <p>This game requires JavaScript to run. Please enable JavaScript in your browser.</p>
+    </div>
+  </noscript>
+  
+  <!-- Service worker registration for PWA capabilities -->
+  <script>
+    // Register service worker for caching (optional)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {
+          // Service worker registration failed, but continue anyway
+        });
+      });
+    }
+    
+    // Prevent context menu on right click
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+    
+    // Prevent zooming with keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && (e.key === '+' || e.key === '-' || e.key === '0')) {
+        e.preventDefault();
+      }
+    });
+    
+    // Prevent pinch zoom on mobile
+    document.addEventListener('touchstart', (e) => {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+    
+    document.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  </script>
+  
+  <!-- Main application entry point -->
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html> 

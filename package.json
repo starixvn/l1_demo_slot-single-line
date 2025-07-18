@@ -1,0 +1,38 @@
+{
+  "name": "slot-single-line",
+  "version": "1.0.0",
+  "description": "A high-performance single-line slot machine game built with PIXI.js and TypeScript",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+  },
+  "dependencies": {
+    "pixi.js": "^7.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.0",
+    "@typescript-eslint/eslint-plugin": "^6.7.4",
+    "@typescript-eslint/parser": "^6.7.4",
+    "eslint": "^8.50.0",
+    "typescript": "^5.2.2",
+    "vite": "^4.4.9"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "slot-machine",
+    "game",
+    "pixi.js",
+    "typescript",
+    "webgl",
+    "mobile-optimized"
+  ],
+  "author": "",
+  "license": "MIT"
+} 

@@ -1,93 +1,295 @@
-# slot-single-line
+# Slot Single-Line Game
 
+A high-performance single-line slot machine game built with **PIXI.js** and **TypeScript**. Optimized for both web browsers and mobile devices with comprehensive asset management and error handling.
 
+## 🎮 Features
 
-## Getting started
+- **High-Performance Rendering**: Built with PIXI.js for smooth 60fps gameplay
+- **Mobile Optimized**: Responsive design with touch controls and mobile-specific optimizations
+- **Robust Asset Management**: Comprehensive asset loading with error handling and retry logic
+- **TypeScript**: Fully typed for better development experience and code reliability
+- **Progressive Loading**: Smart asset loading with priority-based batching
+- **Error Recovery**: Intelligent error handling with user-friendly messages and suggestions
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## 🏗️ Architecture
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
+### Project Structure
 ```
-cd existing_repo
-git remote add origin https://git3.nexdev.net/l1/demo/slot-single-line.git
-git branch -M main
-git push -uf origin main
+slot-single-line/
+├── src/
+│   ├── core/              # Core application logic
+│   │   └── game-application.ts
+│   ├── systems/           # Game systems and managers
+│   │   └── asset-manager.ts
+│   ├── types/             # TypeScript type definitions
+│   │   └── game-types.ts
+│   ├── config/            # Configuration and constants
+│   │   └── game-config.ts
+│   ├── utils/             # Utility functions
+│   │   ├── asset-utils.ts
+│   │   └── error-handler.ts
+│   └── main.ts            # Application entry point
+├── index.html             # Main HTML file
+├── package.json           # Dependencies and scripts
+├── tsconfig.json          # TypeScript configuration
+└── vite.config.ts         # Vite build configuration
 ```
 
-## Integrate with your tools
+### Key Components
 
-- [ ] [Set up project integrations](https://git3.nexdev.net/l1/demo/slot-single-line/-/settings/integrations)
+#### 🎯 GameApplication
+Main application class that handles PIXI.js initialization, canvas management, and lifecycle events.
 
-## Collaborate with your team
+```typescript
+const gameApp = new GameApplication({
+  width: 1920,
+  height: 1080,
+  backgroundColor: 0x1a1a2e,
+});
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+await gameApp.initialize('game-container');
+await gameApp.loadAssets(assetUrls);
+gameApp.start();
+```
 
-## Test and Deploy
+#### 📦 AssetManager
+Comprehensive asset loading system with error handling, retry logic, and progress tracking.
 
-Use the built-in continuous integration in GitLab.
+```typescript
+const assetManager = new AssetManager();
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+// Load assets with automatic error handling
+await assetManager.loadAssets([
+  {
+    name: 'background',
+    url: '/assets/bg.jpg',
+    type: 'texture',
+    priority: 1,
+  },
+  {
+    name: 'spritesheet',
+    url: '/assets/sprites.json',
+    type: 'spritesheet',
+    priority: 2,
+  },
+]);
 
-***
+// Get loaded assets
+const backgroundTexture = assetManager.getAsset('background');
+```
 
-# Editing this README
+## 🚀 Getting Started
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
 
-## Suggestions for a good README
+### Installation
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd slot-single-line
+   ```
 
-## Name
-Choose a self-explaining name for your project.
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+3. **Start development server**
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+4. **Open your browser**
+   Navigate to `http://localhost:3000`
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+### Building for Production
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+```bash
+npm run build
+# or
+yarn build
+```
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+## 📱 Mobile Optimization
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+The application includes comprehensive mobile optimizations:
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+- **Responsive Canvas**: Automatically scales to fit different screen sizes
+- **Touch Controls**: Optimized touch event handling with gesture support
+- **Performance Tuning**: Reduced resolution and effects on lower-end devices
+- **Battery Optimization**: Automatic pause/resume when app loses focus
+- **Orientation Handling**: Supports both portrait and landscape modes
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+## 🛠️ Asset Management
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+### Supported Asset Types
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+| Type | Formats | Description |
+|------|---------|-------------|
+| `texture` | PNG, JPG, WebP, AVIF | Images and textures |
+| `spritesheet` | JSON | PIXI.js spritesheet format |
+| `sound` | MP3, WAV, OGG | Audio files (requires audio library) |
+| `json` | JSON | Data files |
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+### Asset Configuration
 
-## License
-For open source projects, say how it is licensed.
+```typescript
+interface AssetConfig {
+  name: string;           // Unique identifier
+  url: string;           // Asset URL or path
+  type: 'texture' | 'spritesheet' | 'sound' | 'json';
+  priority?: number;      // Loading priority (1-10)
+}
+```
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+### Error Handling
+
+The asset manager provides comprehensive error handling:
+
+```typescript
+// Listen for loading events
+assetManager.addEventListener('loading-error', (event) => {
+  const error = event.detail.data;
+  console.error('Asset failed to load:', error.asset.name);
+  
+  // Get user-friendly error message
+  const message = AssetErrorHandler.getUserMessage(error);
+  const suggestions = AssetErrorHandler.getSuggestions(error);
+});
+
+// Check if errors are retryable
+const canRetry = AssetErrorHandler.isRetryable(error);
+```
+
+## ⚡ Performance Optimization
+
+### PIXI.js Optimizations
+- WebGPU renderer with WebGL fallback
+- Sprite batching and texture atlases
+- Object pooling for frequently created objects
+- Efficient scene graph management
+- Smart culling for off-screen objects
+
+### Mobile Optimizations
+- Reduced resolution on older devices
+- Battery-conscious rendering
+- Optimized touch event handling
+- Progressive asset loading
+- Memory management and garbage collection
+
+### Build Optimizations
+- Tree shaking and dead code elimination
+- Asset compression and optimization
+- CDN-ready static assets
+- Service worker caching (optional)
+
+## 🔧 Configuration
+
+### Game Configuration
+
+```typescript
+// src/config/game-config.ts
+export const GAME_CONSTANTS = {
+  CANVAS_WIDTH: 1920,
+  CANVAS_HEIGHT: 1080,
+  MAX_FPS: 60,
+  TARGET_FPS: 60,
+  MAX_RETRY_ATTEMPTS: 3,
+  RETRY_DELAY: 1000,
+  // ... more constants
+};
+```
+
+### Device-Specific Optimization
+
+The application automatically detects device capabilities and adjusts settings:
+
+```typescript
+// Automatically optimizes based on:
+// - Device pixel ratio
+// - Hardware concurrency
+// - Mobile vs desktop
+// - Memory constraints
+const config = getOptimizedConfig();
+```
+
+## 🧪 Development
+
+### Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run type-check` - Run TypeScript type checking
+- `npm run lint` - Run ESLint
+
+### TypeScript Configuration
+
+The project uses strict TypeScript configuration with:
+- Strict type checking
+- Path mapping for clean imports
+- ES2020 target for modern browser features
+- Module resolution optimized for Vite
+
+## 📊 Error Handling & Debugging
+
+### Asset Loading Errors
+
+Common error types and solutions:
+
+| Error Type | Cause | Solution |
+|------------|-------|----------|
+| `NETWORK_ERROR` | Connection issues | Check internet, retry loading |
+| `NOT_FOUND` | 404 errors | Verify asset URLs and server |
+| `CORS_ERROR` | Cross-origin issues | Configure CORS headers |
+| `PARSE_ERROR` | Invalid file format | Check file format and encoding |
+| `TIMEOUT_ERROR` | Slow loading | Reduce file sizes, check network |
+
+### Debug Mode
+
+Access debug information in the browser console:
+
+```javascript
+// Access game application instance
+window.gameApp.getAssetManager().getErrors();
+
+// Get error statistics
+AssetErrorHandler.getErrorStats();
+```
+
+## 🎯 Slot Game Implementation
+
+This application provides the foundation for a slot machine game. The basic structure includes:
+
+1. **PIXI Application Setup** - Canvas initialization and configuration
+2. **Asset Loading System** - Sprites, sounds, and spritesheets
+3. **Error Handling** - Comprehensive error recovery
+4. **Mobile Optimization** - Touch controls and responsive design
+5. **Performance Monitoring** - FPS tracking and optimization
+
+To build your slot game logic, extend the `GameApplication` class and add your game-specific components to the `gameContainer`.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [PIXI.js](https://pixijs.com/) - Amazing 2D rendering library
+- [Vite](https://vitejs.dev/) - Fast build tool and dev server
+- [TypeScript](https://www.typescriptlang.org/) - Type safety and developer experience
