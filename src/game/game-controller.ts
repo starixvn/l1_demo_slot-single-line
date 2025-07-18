@@ -1,12 +1,12 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
-import { SlotMachine } from './slot-machine';
+import { CombatSystem } from './combat-system';
 import { SymbolType } from '@/types/slot-types';
 
 /**
  * Game controller that manages user interactions and game flow
  */
 export class GameController extends Container {
-  private slotMachine!: SlotMachine;
+  private combatSystem!: CombatSystem;
   private spinButton!: Container;
   private testButton!: Container;
   private resetButton!: Container;
@@ -22,11 +22,11 @@ export class GameController extends Container {
    * Set up the game controller components
    */
   private setupGameController(): void {
-    // Create slot machine
-    this.slotMachine = new SlotMachine();
-    this.slotMachine.x = 0;
-    this.slotMachine.y = 0;
-    this.addChild(this.slotMachine);
+    // Create combat system (includes slot machine and monsters)
+    this.combatSystem = new CombatSystem();
+    this.combatSystem.x = 0;
+    this.combatSystem.y = 0;
+    this.addChild(this.combatSystem);
     
     // Create button container
     this.buttonContainer = new Container();
@@ -124,18 +124,25 @@ export class GameController extends Container {
    * Handle spin button click
    */
   private async handleSpin(): Promise<void> {
-    if (this.slotMachine.getIsSpinning()) {
-      console.log('GameController: Already spinning');
+    if (this.combatSystem.getIsInCombat()) {
+      console.log('GameController: Already in combat');
       return;
     }
     
-    console.log('GameController: Spin button clicked');
+    console.log('GameController: Combat spin initiated');
     
     try {
-      const result = await this.slotMachine.spin();
-      console.log('GameController: Spin result:', result);
+      const { spinResult, combatResults } = await this.combatSystem.performCombatSpin();
+      console.log('GameController: Combat results:', { spinResult, combatResults });
+      
+      // Log detailed combat information
+      if (combatResults.length > 0) {
+        const totalDamage = combatResults.reduce((sum, result) => sum + result.damage, 0);
+        const totalRewards = combatResults.reduce((sum, result) => sum + (result.rewards?.coins || 0), 0);
+        console.log(`Combat summary: ${totalDamage} total damage, ${totalRewards} coins earned`);
+      }
     } catch (error) {
-      console.error('GameController: Spin error:', error);
+      console.error('GameController: Combat error:', error);
     }
   }
   
@@ -152,11 +159,11 @@ export class GameController extends Container {
       SymbolType.CRUSADER_BLADE,
     ];
     
-    this.slotMachine.setSymbols(testSymbols);
+    this.combatSystem.getSlotMachine().setSymbols(testSymbols);
     
     // Simulate a win calculation
     setTimeout(async () => {
-      await this.slotMachine.spin();
+      await this.combatSystem.performCombatSpin();
     }, 100);
   }
   
@@ -167,17 +174,25 @@ export class GameController extends Container {
     console.log('GameController: Reset button clicked');
     
     // Add coins to balance
-    this.slotMachine.addCoins(500);
+    this.combatSystem.getSlotMachine().addCoins(500);
     
-    // Reset reel highlights
-    this.slotMachine.getReels().forEach(reel => reel.highlight(false));
+    // Reset reel highlights and combat
+    this.combatSystem.getSlotMachine().getReels().forEach(reel => reel.highlight(false));
+    this.combatSystem.resetCombat();
   }
   
   /**
-   * Get the slot machine instance
+   * Get the combat system instance
    */
-  getSlotMachine(): SlotMachine {
-    return this.slotMachine;
+  getCombatSystem(): CombatSystem {
+    return this.combatSystem;
+  }
+  
+  /**
+   * Get the slot machine instance (through combat system)
+   */
+  getSlotMachine() {
+    return this.combatSystem.getSlotMachine();
   }
   
   /**
