@@ -1,7 +1,8 @@
 import { Container, Text, TextStyle } from 'pixi.js';
 import { Reel } from './reel';
-import { SymbolType, SpinResult, ReelResult, WinType } from '@/types/slot-types';
+import { SymbolType, SpinResult, ReelResult, WinType, RespinInfo } from '@/types/slot-types';
 import { SymbolGenerator, SYMBOL_CONFIGS, SLOT_CONFIG } from '@/config/symbol-config';
+import { RespinManager } from '@/systems/respin-manager';
 
 /**
  * Main slot machine class that manages reels and game logic
@@ -12,10 +13,14 @@ export class SlotMachine extends Container {
   private titleText!: Text;
   private resultText!: Text;
   private balanceText!: Text;
+  private respinText!: Text;
   private balance: number = 1000; // Starting balance
+  private respinManager: RespinManager;
 
   constructor() {
     super();
+    
+    this.respinManager = RespinManager.getInstance();
     
     this.setupSlotMachine();
     this.updateDisplay();
@@ -77,6 +82,20 @@ export class SlotMachine extends Container {
     this.balanceText.x = 0;
     this.balanceText.y = SLOT_CONFIG.REEL_HEIGHT + 100;
     this.addChild(this.balanceText);
+    
+    // Create respin display
+    const respinStyle = new TextStyle({
+      fontFamily: 'Arial, sans-serif',
+      fontSize: 16,
+      fill: 0x00FFFF,
+      align: 'center',
+    });
+    
+    this.respinText = new Text('', respinStyle);
+    this.respinText.anchor.set(0.5, 0);
+    this.respinText.x = 0;
+    this.respinText.y = SLOT_CONFIG.REEL_HEIGHT + 130;
+    this.addChild(this.respinText);
   }
   
   /**
@@ -97,30 +116,48 @@ export class SlotMachine extends Container {
   }
   
   /**
-   * Spin all reels
+   * Spin all reels (regular spin with bet deduction)
    */
   async spin(): Promise<SpinResult> {
+    return this.performSpin(false);
+  }
+
+  /**
+   * Perform a respin (no bet deduction)
+   */
+  async respin(): Promise<SpinResult> {
+    return this.performSpin(true);
+  }
+
+  /**
+   * Core spinning logic shared by spin() and respin()
+   */
+  private async performSpin(isRespin: boolean): Promise<SpinResult> {
     if (this.isSpinning) {
       console.warn('SlotMachine: Already spinning');
       return this.createNoSpinResult();
     }
     
-    if (this.balance < SLOT_CONFIG.BET_AMOUNT) {
-      console.warn('SlotMachine: Insufficient balance');
-      this.resultText.text = 'Insufficient balance!';
-      this.resultText.style.fill = 0xFF0000;
-      return this.createNoSpinResult();
+    // Only check balance and deduct for regular spins
+    if (!isRespin) {
+      if (this.balance < SLOT_CONFIG.BET_AMOUNT) {
+        console.warn('SlotMachine: Insufficient balance');
+        this.resultText.text = 'Insufficient balance!';
+        this.resultText.style.fill = 0xFF0000;
+        return this.createNoSpinResult();
+      }
+      
+      // Deduct bet amount for regular spins only
+      this.balance -= SLOT_CONFIG.BET_AMOUNT;
     }
     
-    // Deduct bet amount
-    this.balance -= SLOT_CONFIG.BET_AMOUNT;
     this.updateDisplay();
     
     this.isSpinning = true;
-    this.resultText.text = 'Spinning...';
-    this.resultText.style.fill = 0xFFFFFF;
+    this.resultText.text = isRespin ? 'Respinning...' : 'Spinning...';
+    this.resultText.style.fill = isRespin ? 0x00FFFF : 0xFFFFFF;
     
-    console.log('SlotMachine: Starting spin');
+    console.log(`SlotMachine: Starting ${isRespin ? 'respin' : 'spin'}`);
     
     // Start spinning all reels
     this.reels.forEach(reel => reel.spin());
@@ -139,14 +176,14 @@ export class SlotMachine extends Container {
     // Calculate win result
     const spinResult = this.calculateWinResult(reelResults);
     
-    // Update balance with payout
+    // Update balance with payout (always add payouts regardless of spin type)
     this.balance += spinResult.payout;
     
     // Display result
     this.displayResult(spinResult);
     this.updateDisplay();
     
-    console.log('SlotMachine: Spin complete', spinResult);
+    console.log(`SlotMachine: ${isRespin ? 'Respin' : 'Spin'} complete`, spinResult);
     
     return spinResult;
   }
@@ -261,6 +298,19 @@ export class SlotMachine extends Container {
    */
   private updateDisplay(): void {
     this.balanceText.text = `Balance: ${this.balance} coins`;
+  }
+
+  /**
+   * Update respin display information
+   */
+  public updateRespinDisplay(respinInfo: RespinInfo | null): void {
+    if (!respinInfo || !respinInfo.isRespinActive) {
+      this.respinText.text = '';
+      return;
+    }
+    
+    this.respinText.text = this.respinManager.formatRespinDisplay(respinInfo);
+    this.respinText.style.fill = 0x00FFFF;
   }
   
   /**

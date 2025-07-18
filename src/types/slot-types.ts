@@ -55,6 +55,7 @@ export interface SpinResult {
   winType?: WinType;
   payout: number;
   winningSymbols?: SymbolType[];
+  respinInfo?: RespinInfo; // Added for respin logic
 }
 
 /**
@@ -65,6 +66,61 @@ export enum WinType {
   THREE_OF_A_KIND = 'three_of_a_kind',
   BONUS_TRIGGER = 'bonus_trigger',
   WILD_WIN = 'wild_win',
+}
+
+/**
+ * Game state enumeration
+ */
+export enum GameState {
+  IDLE = 'idle',
+  SPINNING = 'spinning',
+  ATTACKING = 'attacking',
+  RESPINNING = 'respinning',
+  RESPIN_EVALUATING = 'respin_evaluating',
+  GAME_OVER = 'game_over',
+}
+
+/**
+ * Respin information and logic
+ */
+export interface RespinInfo {
+  isRespinActive: boolean;
+  respinsRemaining: number;
+  totalRespinsGranted: number;
+  activatorSymbols: SymbolType[]; // Symbols that triggered the respin
+  chainCount: number; // Number of times respins have chained
+}
+
+/**
+ * Game loop state management
+ */
+export interface GameLoopState {
+  currentState: GameState;
+  previousState: GameState;
+  stateStartTime: number;
+  spinCount: number;
+  totalRespins: number;
+  consecutiveWins: number;
+  balance: number;
+}
+
+/**
+ * State transition configuration
+ */
+export interface StateTransition {
+  from: GameState;
+  to: GameState;
+  condition: (state: GameLoopState) => boolean;
+  action?: (state: GameLoopState) => Promise<void> | void;
+}
+
+/**
+ * Respin activation conditions
+ */
+export interface RespinActivation {
+  activeSymbolCount: number;
+  respinsGranted: number;
+  symbols: SymbolType[];
 }
 
 /**

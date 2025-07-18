@@ -1,6 +1,7 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { CombatSystem } from './combat-system';
-import { SymbolType } from '@/types/slot-types';
+import { SymbolType, GameState } from '@/types/slot-types';
+import { GameLoopManager } from '@/systems/game-loop-manager';
 
 /**
  * Game controller that manages user interactions and game flow
@@ -11,11 +12,16 @@ export class GameController extends Container {
   private testButton!: Container;
   private resetButton!: Container;
   private buttonContainer!: Container;
+  private statusText!: Text;
+  private gameLoopManager: GameLoopManager;
 
   constructor() {
     super();
     
+    this.gameLoopManager = GameLoopManager.getInstance();
+    
     this.setupGameController();
+    this.setupGameLoopListeners();
   }
 
   /**
@@ -36,7 +42,84 @@ export class GameController extends Container {
     // Create buttons
     this.createButtons();
     
+    // Create status display
+    this.createStatusDisplay();
+    
     console.log('GameController: Initialized');
+  }
+
+  /**
+   * Create status display for game state and respin info
+   */
+  private createStatusDisplay(): void {
+    const statusStyle = new TextStyle({
+      fontFamily: 'Arial, sans-serif',
+      fontSize: 14,
+      fill: 0xAAAAAA,
+      align: 'left',
+    });
+    
+    this.statusText = new Text('', statusStyle);
+    this.statusText.x = -400;
+    this.statusText.y = -200;
+    this.addChild(this.statusText);
+    
+    this.updateStatusDisplay();
+  }
+
+  /**
+   * Set up game loop event listeners
+   */
+  private setupGameLoopListeners(): void {
+    this.gameLoopManager.on('stateChanged', (newState: GameState, oldState: GameState) => {
+      console.log(`GameController: State changed from ${oldState} to ${newState}`);
+      this.updateStatusDisplay();
+      this.updateButtonStates();
+    });
+    
+    this.gameLoopManager.on('respinActivated', (respinInfo: any) => {
+      console.log('GameController: Respins activated!', respinInfo);
+      this.updateStatusDisplay();
+    });
+    
+    this.gameLoopManager.on('respinCompleted', (respinInfo: any) => {
+      console.log('GameController: Respins completed!', respinInfo);
+      this.updateStatusDisplay();
+    });
+    
+    this.gameLoopManager.on('gameError', (error: any) => {
+      console.error('GameController: Game loop error:', error);
+    });
+  }
+
+  /**
+   * Update status display with current game state
+   */
+  private updateStatusDisplay(): void {
+    const stats = this.gameLoopManager.getGameStats();
+    this.statusText.text = `Game Status:\n${stats}`;
+  }
+
+  /**
+   * Update button states based on game state
+   */
+  private updateButtonStates(): void {
+    const canSpin = this.gameLoopManager.canSpin();
+    const currentState = this.gameLoopManager.getCurrentState();
+    
+    // Update spin button text based on state
+    const spinButtonText = this.spinButton.getChildAt(1) as Text;
+    if (currentState === GameState.RESPINNING) {
+      spinButtonText.text = '🔄 RESPIN 🔄';
+      (this.spinButton.getChildAt(0) as Graphics).tint = 0x00FFFF;
+    } else {
+      spinButtonText.text = '🎰 SPIN 🎰';
+      (this.spinButton.getChildAt(0) as Graphics).tint = canSpin ? 0xFFFFFF : 0x666666;
+    }
+    
+    // Disable/enable buttons based on state
+    this.spinButton.alpha = canSpin ? 1.0 : 0.5;
+    this.spinButton.eventMode = canSpin ? 'static' : 'none';
   }
   
   /**
@@ -124,12 +207,13 @@ export class GameController extends Container {
    * Handle spin button click
    */
   private async handleSpin(): Promise<void> {
-    if (this.combatSystem.getIsInCombat()) {
-      console.log('GameController: Already in combat');
+    if (!this.gameLoopManager.canSpin()) {
+      console.log('GameController: Cannot spin in current state');
       return;
     }
     
-    console.log('GameController: Combat spin initiated');
+    const currentState = this.gameLoopManager.getCurrentState();
+    console.log(`GameController: ${currentState === GameState.RESPINNING ? 'Respin' : 'Spin'} initiated`);
     
     try {
       const { spinResult, combatResults } = await this.combatSystem.performCombatSpin();
@@ -141,6 +225,10 @@ export class GameController extends Container {
         const totalRewards = combatResults.reduce((sum, result) => sum + (result.rewards?.coins || 0), 0);
         console.log(`Combat summary: ${totalDamage} total damage, ${totalRewards} coins earned`);
       }
+      
+      // Update displays
+      this.updateStatusDisplay();
+      
     } catch (error) {
       console.error('GameController: Combat error:', error);
     }

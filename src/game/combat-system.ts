@@ -2,9 +2,10 @@ import { Container } from 'pixi.js';
 import { SlotMachine } from './slot-machine';
 import { MonstersTrail } from './monsters-trail';
 import { CriticalHitEffects } from './critical-hit-effects';
-import { SymbolType, SpinResult } from '@/types/slot-types';
+import { SymbolType, SpinResult, GameState } from '@/types/slot-types';
 import { CombatResult } from '@/types/monster-types';
 import { MonsterGenerator } from '@/config/monster-config';
+import { GameLoopManager } from '@/systems/game-loop-manager';
 
 /**
  * Combat system that connects slot machine results to monster attacks
@@ -13,15 +14,21 @@ export class CombatSystem extends Container {
   private slotMachine!: SlotMachine;
   private monstersTrail!: MonstersTrail;
   private effects!: CriticalHitEffects;
-  private isInCombat: boolean = false;
+  private gameLoopManager: GameLoopManager;
 
   constructor() {
     super();
     
+    this.gameLoopManager = GameLoopManager.getInstance();
+    
     this.setupCombatSystem();
+    this.setupGameLoopListeners();
     
     // Initialize monster generator
     MonsterGenerator.initialize();
+    
+    // Start the game loop
+    this.gameLoopManager.startGameLoop();
   }
 
   /**
@@ -46,6 +53,33 @@ export class CombatSystem extends Container {
     
     console.log('CombatSystem: Initialized slot machine vs monster combat');
   }
+
+  /**
+   * Set up game loop event listeners
+   */
+  private setupGameLoopListeners(): void {
+    this.gameLoopManager.on('stateChanged', (newState: GameState, oldState: GameState) => {
+      console.log(`CombatSystem: State changed from ${oldState} to ${newState}`);
+      
+      // Update slot machine respin display when state changes
+      const respinInfo = this.gameLoopManager.getCurrentRespinInfo();
+      this.slotMachine.updateRespinDisplay(respinInfo);
+    });
+    
+    this.gameLoopManager.on('respinActivated', (respinInfo: any) => {
+      console.log('CombatSystem: Respins activated!', respinInfo);
+      this.slotMachine.updateRespinDisplay(respinInfo);
+    });
+    
+    this.gameLoopManager.on('respinCompleted', (respinInfo: any) => {
+      console.log('CombatSystem: Respins completed!', respinInfo);
+      this.slotMachine.updateRespinDisplay(null);
+    });
+    
+    this.gameLoopManager.on('gameError', (error: any) => {
+      console.error('CombatSystem: Game loop error:', error);
+    });
+  }
   
   /**
    * Perform a combat spin - spins slot machine and attacks monsters
@@ -54,7 +88,7 @@ export class CombatSystem extends Container {
     spinResult: SpinResult;
     combatResults: CombatResult[];
   }> {
-    if (this.isInCombat || this.slotMachine.getIsSpinning()) {
+    if (!this.gameLoopManager.canSpin()) {
       return {
         spinResult: {
           reels: [],
@@ -66,11 +100,15 @@ export class CombatSystem extends Container {
       };
     }
     
-    this.isInCombat = true;
+    // Set state to spinning
+    this.gameLoopManager.setState(GameState.SPINNING);
     
     try {
-      // Spin the slot machine
-      const spinResult = await this.slotMachine.spin();
+      // Determine if this is a respin or regular spin
+      const isRespin = this.gameLoopManager.isInRespinMode();
+      const spinResult = isRespin ? 
+        await this.slotMachine.respin() : 
+        await this.slotMachine.spin();
       
       // Process combat based on spin results
       const combatResults = await this.processCombatFromSpin(spinResult);
@@ -81,10 +119,16 @@ export class CombatSystem extends Container {
       
       if (totalCombatCoins > 0) {
         this.slotMachine.addCoins(totalCombatCoins);
+        this.gameLoopManager.updateBalance(totalCombatCoins);
         console.log(`Combat rewards: ${totalCombatCoins} coins added to balance`);
       }
       
-      this.isInCombat = false;
+      // Let game loop manager handle the state transitions
+      if (isRespin) {
+        await this.gameLoopManager.processRespin(spinResult);
+      } else {
+        await this.gameLoopManager.processSpinResult(spinResult);
+      }
       
       return {
         spinResult,
@@ -92,7 +136,8 @@ export class CombatSystem extends Container {
       };
       
     } catch (error) {
-      this.isInCombat = false;
+      console.error('CombatSystem: Error in combat spin:', error);
+      this.gameLoopManager.setState(GameState.IDLE);
       throw error;
     }
   }
@@ -240,7 +285,10 @@ export class CombatSystem extends Container {
    * Check if currently in combat
    */
   getIsInCombat(): boolean {
-    return this.isInCombat;
+    const currentState = this.gameLoopManager.getCurrentState();
+    return currentState === GameState.SPINNING || 
+           currentState === GameState.ATTACKING || 
+           currentState === GameState.RESPINNING;
   }
   
   /**
@@ -267,6 +315,7 @@ export class CombatSystem extends Container {
   resetCombat(): void {
     this.monstersTrail.resetTrail();
     this.effects.clearAllEffects();
-    this.isInCombat = false;
+    this.gameLoopManager.resetGame();
+    this.slotMachine.updateRespinDisplay(null);
   }
 } 
