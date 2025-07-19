@@ -4,17 +4,93 @@ import { SymbolGenerator, SYMBOL_CONFIGS, SLOT_CONFIG } from '@/config/symbol-co
 import { getSymbolTexture, areSymbolTexturesLoaded } from '@/systems/asset-manager';
 
 /**
- * Animation configuration for the reel
+ * Tween interface for animation
  */
-interface ReelAnimationConfig {
-  spinSpeed: number;
-  maxSpinSpeed: number;
-  acceleration: number;
-  deceleration: number;
-  finalSlowdown: number;
-  symbolHeight: number;
-  symbolsToShow: number;
-  totalSymbols: number;
+interface Tween {
+  object: any;
+  property: string;
+  propertyBeginValue: number;
+  target: number;
+  easing: (t: number) => number;
+  time: number;
+  change?: (tween: Tween) => void;
+  complete?: (tween: Tween) => void;
+  start: number;
+}
+
+/**
+ * Global tweening system
+ */
+class TweenManager {
+  private static tweening: Tween[] = [];
+  private static tickerAdded = false;
+
+  static tweenTo(
+    object: any,
+    property: string,
+    target: number,
+    time: number,
+    easing: (t: number) => number,
+    onchange?: (tween: Tween) => void,
+    oncomplete?: (tween: Tween) => void
+  ): Tween {
+    const tween: Tween = {
+      object,
+      property,
+      propertyBeginValue: object[property],
+      target,
+      easing,
+      time,
+      change: onchange,
+      complete: oncomplete,
+      start: Date.now(),
+    };
+
+    this.tweening.push(tween);
+
+    // Add ticker if not already added
+    if (!this.tickerAdded) {
+      Ticker.shared.add(this.updateTweens.bind(this));
+      this.tickerAdded = true;
+    }
+
+    return tween;
+  }
+
+  private static updateTweens(): void {
+    const now = Date.now();
+    const remove: Tween[] = [];
+
+    for (let i = 0; i < this.tweening.length; i++) {
+      const t = this.tweening[i];
+      const phase = Math.min(1, (now - t.start) / t.time);
+
+      t.object[t.property] = this.lerp(t.propertyBeginValue, t.target, t.easing(phase));
+      if (t.change) t.change(t);
+      if (phase === 1) {
+        t.object[t.property] = t.target;
+        if (t.complete) t.complete(t);
+        remove.push(t);
+      }
+    }
+    for (let i = 0; i < remove.length; i++) {
+      this.tweening.splice(this.tweening.indexOf(remove[i]), 1);
+    }
+  }
+
+  private static lerp(a1: number, a2: number, t: number): number {
+    return a1 * (1 - t) + a2 * t;
+  }
+
+  // Backout easing function for natural slot machine feel
+  static backout(amount: number = 0.5): (t: number) => number {
+    return (t: number) => --t * t * ((amount + 1) * t + amount) + 1;
+  }
+
+  // Ease out cubic for smooth deceleration
+  static easeOutCubic(t: number): number {
+    return 1 - Math.pow(1 - t, 3);
+  }
 }
 
 /**
@@ -25,7 +101,7 @@ class SymbolDisplay extends Container {
   private symbolEmoji?: Text;
   private symbolText!: Text;
   private useTextures: boolean;
-  public readonly symbolType: SymbolType; // Store the symbol type
+  public readonly symbolType: SymbolType;
 
   constructor(symbol: SymbolType, useTextures: boolean = false) {
     super();
@@ -36,17 +112,14 @@ class SymbolDisplay extends Container {
 
   private createSymbol(symbol: SymbolType): void {
     const config = SYMBOL_CONFIGS[symbol];
-    console.log(`Creating symbol display for ${symbol} with config:`, config);
     
     if (this.useTextures) {
-      // Create sprite for texture display
       this.symbolSprite = new Sprite();
       this.symbolSprite.anchor.set(0.5, 0.5);
       this.symbolSprite.x = SLOT_CONFIG.REEL_WIDTH / 2;
       this.symbolSprite.y = SLOT_CONFIG.REEL_HEIGHT / 2;
       this.addChild(this.symbolSprite);
       
-      // Smaller text display
       const textStyle = new TextStyle({
         fontFamily: 'Arial, sans-serif',
         fontSize: 12,
@@ -61,27 +134,21 @@ class SymbolDisplay extends Container {
       this.symbolText.y = SLOT_CONFIG.REEL_HEIGHT - 25;
       this.addChild(this.symbolText);
       
-      // Load texture
       const texture = getSymbolTexture(symbol);
       if (texture && this.symbolSprite) {
         this.symbolSprite.texture = texture;
         const maxSize = Math.min(SLOT_CONFIG.REEL_WIDTH - 40, SLOT_CONFIG.REEL_HEIGHT - 60);
         const scale = Math.min(maxSize / texture.width, maxSize / texture.height);
         this.symbolSprite.scale.set(scale);
-        console.log(`Symbol ${symbol}: Loaded texture, scale: ${scale}`);
       } else {
-        console.warn(`Symbol ${symbol}: No texture found, falling back to emoji`);
-        // Fallback to emoji if texture not available
         this.createEmojiDisplay(config);
       }
     } else {
-      console.log(`Symbol ${symbol}: Using emoji display`);
       this.createEmojiDisplay(config);
     }
   }
 
   private createEmojiDisplay(config: any): void {
-    // Emoji display
     const emojiStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
       fontSize: 48,
@@ -107,43 +174,52 @@ class SymbolDisplay extends Container {
     this.symbolText.x = SLOT_CONFIG.REEL_WIDTH / 2;
     this.symbolText.y = SLOT_CONFIG.REEL_HEIGHT / 2 + 30;
     this.addChild(this.symbolText);
+  }
+
+  /**
+   * Update symbol texture (for dynamic symbol changes during spinning)
+   */
+  updateTexture(newSymbol: SymbolType): void {
+    const config = SYMBOL_CONFIGS[newSymbol];
+    (this as any).symbolType = newSymbol; // Update symbol type
     
-    console.log(`Created emoji display for ${config.name}: ${config.emoji}`);
+    if (this.useTextures && this.symbolSprite) {
+      const texture = getSymbolTexture(newSymbol);
+      if (texture) {
+        this.symbolSprite.texture = texture;
+        const maxSize = Math.min(SLOT_CONFIG.REEL_WIDTH - 40, SLOT_CONFIG.REEL_HEIGHT - 60);
+        const scale = Math.min(maxSize / texture.width, maxSize / texture.height);
+        this.symbolSprite.scale.set(scale);
+      }
+      this.symbolText.text = `${config.name}\n${config.value} HP`;
+    } else if (this.symbolEmoji) {
+      this.symbolEmoji.text = config.emoji || '❓';
+      this.symbolText.text = config.name;
+    }
   }
 }
 
 /**
- * Individual reel class that displays and manages symbols with smooth animations
+ * Individual reel class with tween-based animation
  */
 export class Reel extends Container {
   private reelIndex: number;
   private state: ReelState;
   private background!: Graphics;
   private symbolContainer!: Container;
-  private reelMask!: Graphics; // Renamed to avoid conflict
+  private reelMask!: Graphics;
   private symbols: SymbolDisplay[] = [];
   private useTextures: boolean = false;
   
-  // Animation properties
-  private animConfig: ReelAnimationConfig = {
-    spinSpeed: 0,
-    maxSpinSpeed: 40, // Pixels per frame at max speed
-    acceleration: 2,
-    deceleration: 0.95,
-    finalSlowdown: 0.5,
-    symbolHeight: SLOT_CONFIG.REEL_HEIGHT,
-    symbolsToShow: 1, // Single line display
-    totalSymbols: 20, // Total symbols in the loop
-  };
+  // Tween-based animation properties
+  public reelPosition: number = 0; // Current animated position (renamed to avoid conflict)
+  public previousReelPosition: number = 0; // For calculating speed
+  private blurFilter: BlurFilter = new BlurFilter();
+  private currentTween?: Tween; // Store reference for potential cancellation
   
-  private isAnimating: boolean = false;
-  private targetSymbol?: SymbolType;
-  private targetPosition: number = 0;
-  private currentPosition: number = 0;
-  private animationPhase: 'accelerating' | 'spinning' | 'stopping' = 'accelerating';
-  private stopRequested: boolean = false;
-  private tickerFn: (deltaTime: number) => void; // Fixed signature
-  private blurFilter: BlurFilter = new BlurFilter(); // For motion blur effect
+  // Animation configuration
+  private readonly SYMBOL_SIZE = SLOT_CONFIG.REEL_HEIGHT;
+  private readonly SYMBOLS_COUNT = 4; // Visible symbols in the reel
 
   constructor(reelIndex: number, x: number, y: number) {
     super();
@@ -160,33 +236,27 @@ export class Reel extends Container {
       index: reelIndex,
     };
     
-    // Check if we should use textures
     this.useTextures = areSymbolTexturesLoaded();
-    
-    // Bind ticker function to maintain context
-    this.tickerFn = this.updateAnimation.bind(this);
     
     this.setupReel();
     this.createSymbols();
+    this.setupAnimation();
     this.updateDisplay();
     
-    // Debug: Verify container setup
-    console.log(`Reel ${this.reelIndex}: Container setup complete. SymbolContainer children: ${this.symbolContainer.children.length}, useTextures: ${this.useTextures}`);
+    console.log(`Reel ${this.reelIndex}: Initialized with tween-based animation`);
   }
 
   /**
    * Set up the reel visual components
    */
   private setupReel(): void {
-    // Create background
     this.background = new Graphics();
     this.addChild(this.background);
     
-    // Create symbol container for smooth scrolling
     this.symbolContainer = new Container();
     this.addChild(this.symbolContainer);
     
-    // Create mask to show only visible area
+    // Create mask for visible area
     this.reelMask = new Graphics();
     this.reelMask.beginFill(0x000000);
     this.reelMask.drawRect(0, 0, SLOT_CONFIG.REEL_WIDTH, SLOT_CONFIG.REEL_HEIGHT);
@@ -194,240 +264,83 @@ export class Reel extends Container {
     this.addChild(this.reelMask);
     this.symbolContainer.mask = this.reelMask;
     
-    console.log(`Reel ${this.reelIndex}: Created mask with dimensions ${SLOT_CONFIG.REEL_WIDTH}x${SLOT_CONFIG.REEL_HEIGHT}`);
-    
-    // Draw initial border
     this.drawBorder();
   }
 
   /**
-   * Create the symbol displays for animation
+   * Create symbols for the reel
    */
   private createSymbols(): void {
     this.symbols = [];
     
-    // Create enough symbols for smooth looping
-    for (let i = 0; i < this.animConfig.totalSymbols; i++) {
+    // Create symbols (one more than visible for smooth scrolling)
+    for (let i = 0; i < this.SYMBOLS_COUNT; i++) {
       const symbol = SymbolGenerator.generateSymbol();
       const symbolDisplay = new SymbolDisplay(symbol, this.useTextures);
       
-      // Position symbols vertically - reversed for top-to-bottom movement
-      // Symbol 0 at y=0, Symbol 1 at y=-200 (above), Symbol 2 at y=-400 (above), etc.
-      symbolDisplay.y = -i * this.animConfig.symbolHeight;
+      // Position symbol
+      symbolDisplay.y = i * this.SYMBOL_SIZE;
       
       this.symbolContainer.addChild(symbolDisplay);
       this.symbols.push(symbolDisplay);
     }
     
-    // Initialize position to show the first symbol in the visible area
-    this.currentPosition = 0;
-    this.symbolContainer.y = 0; // Show first symbol (at y=0)
-    
-    // Set current symbol to the first one and ensure it's visible
-    this.updateCurrentSymbol();
     this.state.currentSymbol = this.symbols[0].symbolType;
     
-    console.log(`Reel ${this.reelIndex}: Created ${this.animConfig.totalSymbols} symbols, initial position: ${this.currentPosition}`);
+    console.log(`Reel ${this.reelIndex}: Created ${this.SYMBOLS_COUNT} symbols`);
   }
 
   /**
-   * Update the current symbol based on container position
+   * Set up animation system
    */
-  private updateCurrentSymbol(): void {
-    // Calculate which symbol is currently visible
-    // Since symbols are at negative Y positions, we use the position directly
-    const visiblePosition = this.currentPosition % (this.animConfig.totalSymbols * this.animConfig.symbolHeight);
-    const symbolIndex = Math.floor(visiblePosition / this.animConfig.symbolHeight) % this.animConfig.totalSymbols;
-    const symbolDisplay = this.symbols[symbolIndex];
+  private setupAnimation(): void {
+    // Initialize blur filter
+    this.blurFilter.blurX = 0;
+    this.blurFilter.blurY = 0;
+    this.symbolContainer.filters = [this.blurFilter];
     
-    if (symbolDisplay) {
-      // Get the actual symbol type from the display
-      this.state.currentSymbol = symbolDisplay.symbolType;
-    }
+    // Add to ticker for position-based updates
+    Ticker.shared.add(this.updateSymbolPositions.bind(this));
   }
 
   /**
-   * Animation update function called by PIXI Ticker
+   * Update symbol positions based on current position (called every frame)
    */
-  private updateAnimation(deltaTime: number): void { // Fixed signature
-    if (!this.isAnimating) return;
-    
-    switch (this.animationPhase) {
-      case 'accelerating':
-        // Accelerate to max speed
-        this.animConfig.spinSpeed = Math.min(
-          this.animConfig.spinSpeed + this.animConfig.acceleration * deltaTime,
-          this.animConfig.maxSpinSpeed
-        );
-        
-        if (this.animConfig.spinSpeed >= this.animConfig.maxSpinSpeed) {
-          this.animationPhase = 'spinning';
-        }
-        break;
-        
-      case 'spinning':
-        // Check if stop was requested
-        if (this.stopRequested) {
-          this.animationPhase = 'stopping';
-          this.calculateStopPosition();
-        }
-        break;
-        
-      case 'stopping':
-        // Decelerate to target position
-        const distanceToTarget = Math.abs(this.targetPosition - this.currentPosition);
-        
-        if (distanceToTarget > this.animConfig.symbolHeight * 2) {
-          // Far from target - normal deceleration
-          this.animConfig.spinSpeed *= this.animConfig.deceleration;
-        } else {
-          // Close to target - slow down more
-          this.animConfig.spinSpeed *= this.animConfig.finalSlowdown;
-          
-          // Stop if very close and very slow
-          if (distanceToTarget < 5 && this.animConfig.spinSpeed < 1) {
-            this.stopAnimation();
-            return;
-          }
-        }
-        break;
-    }
-    
-    // Update position - for top to bottom movement
-    this.currentPosition += this.animConfig.spinSpeed * deltaTime;
-    // Since symbols are at negative Y positions, container needs positive Y to show them
-    this.symbolContainer.y = this.currentPosition;
-    
-    // Apply visual effects based on speed
-    this.updateVisualEffects();
-    
-    // Handle infinite scrolling
-    if (this.currentPosition >= this.animConfig.totalSymbols * this.animConfig.symbolHeight) {
-      this.currentPosition -= this.animConfig.totalSymbols * this.animConfig.symbolHeight;
-      if (this.targetPosition >= this.animConfig.totalSymbols * this.animConfig.symbolHeight) {
-        this.targetPosition -= this.animConfig.totalSymbols * this.animConfig.symbolHeight;
+     private updateSymbolPositions(): void {
+     // Update blur based on speed (like the PixiJS example)
+     this.blurFilter.blurY = Math.abs(this.reelPosition - this.previousReelPosition) * 8;
+     this.previousReelPosition = this.reelPosition;
+     
+     // Update symbol positions based on reel position
+     for (let j = 0; j < this.symbols.length; j++) {
+       const symbol = this.symbols[j];
+       const prevY = symbol.y;
+       
+       // Calculate new Y position (this is the key formula from PixiJS example)
+       symbol.y = ((this.reelPosition + j) % this.symbols.length) * this.SYMBOL_SIZE - this.SYMBOL_SIZE;
+      
+      // Detect symbol going over the top and change its texture for variety
+      if (symbol.y < 0 && prevY > this.SYMBOL_SIZE) {
+        const newSymbolType = SymbolGenerator.generateSymbol();
+        symbol.updateTexture(newSymbolType);
       }
     }
+    
+    // Update current visible symbol
+    this.updateCurrentSymbol();
   }
 
   /**
-   * Calculate the exact stop position for the target symbol
+   * Update current symbol based on position
    */
-  private calculateStopPosition(): void {
-    if (!this.targetSymbol) return;
-    
-    // Ensure the target symbol exists in our array at a known position
-    let targetSymbolIndex = this.symbols.findIndex(s => s.symbolType === this.targetSymbol);
-    
-    // If target symbol not found, replace the first symbol with it
-    if (targetSymbolIndex === -1) {
-      this.symbols[0].destroy();
-      this.symbols[0] = new SymbolDisplay(this.targetSymbol, this.useTextures);
-      this.symbols[0].y = 0;
-      this.symbolContainer.addChild(this.symbols[0]);
-      targetSymbolIndex = 0;
-    }
-    
-    // Simple approach: spin a bit more then stop at a position where target symbol is visible
-    const minSpinDistance = this.animConfig.symbolHeight * 3; // Spin at least 3 more symbols
-    const totalHeight = this.animConfig.totalSymbols * this.animConfig.symbolHeight;
-    
-    // Calculate next "round number" position (multiple of totalHeight) to show symbol 0
-    const nextRoundPosition = Math.ceil((this.currentPosition + minSpinDistance) / totalHeight) * totalHeight;
-    this.targetPosition = nextRoundPosition;
-    
-    console.log(`Reel ${this.reelIndex}: Current: ${this.currentPosition}, Min distance: ${minSpinDistance}, Target: ${this.targetPosition}`);
-    
-    console.log(`Reel ${this.reelIndex}: Target position calculated: ${this.targetPosition} for symbol ${this.targetSymbol} (symbol at index ${targetSymbolIndex})`);
-  }
-
-  /**
-   * Update visual effects based on current spin speed
-   */
-  private updateVisualEffects(): void {
-    const speedRatio = this.animConfig.spinSpeed / this.animConfig.maxSpinSpeed;
-    
-    if (speedRatio > 0.7) {
-      // Fast spinning - add vertical motion blur
-      this.blurFilter.blur = speedRatio * 8; // Max blur of 8
-      this.blurFilter.quality = 1;
-      this.symbolContainer.filters = [this.blurFilter];
-    } else if (speedRatio > 0.3) {
-      // Medium speed - light blur
-      this.blurFilter.blur = speedRatio * 4;
-      this.symbolContainer.filters = [this.blurFilter];
-    } else {
-      // Slow or stopped - no blur
-      this.symbolContainer.filters = null;
-    }
-  }
-
-  /**
-   * Stop the animation completely
-   */
-  private stopAnimation(): void {
-    this.isAnimating = false;
-    this.stopRequested = false;
-    this.animConfig.spinSpeed = 0;
-    
-    // Remove from ticker
-    Ticker.shared.remove(this.tickerFn);
-    
-    // Ensure we stop at a position where the target symbol is visible
-    if (this.targetSymbol) {
-      this.ensureSymbolVisible(this.targetSymbol);
-      this.state.currentSymbol = this.targetSymbol;
-    } else {
-      // Snap to exact position and make sure a symbol is visible
-      this.currentPosition = this.targetPosition % (this.animConfig.totalSymbols * this.animConfig.symbolHeight);
-      this.symbolContainer.y = this.currentPosition; // Consistent with animation positioning
-      this.updateCurrentSymbol();
-    }
-    
-    // Clear visual effects
-    this.symbolContainer.filters = null;
-    
-    // Update final display
-    this.updateDisplay();
-    
-    // Mark as not spinning (important for slot machine state)
-    this.state.isSpinning = false;
-    
-    console.log(`Reel ${this.reelIndex}: Animation stopped on symbol ${this.state.currentSymbol} at position ${this.currentPosition}`);
-  }
-
-  /**
-   * Draw the reel border
-   */
-  private drawBorder(): void {
-    const config = SYMBOL_CONFIGS[this.state.currentSymbol];
-    
-    this.background.clear();
-    
-    // Draw background
-    this.background.beginFill(config.color, 0.3);
-    this.background.drawRoundedRect(0, 0, SLOT_CONFIG.REEL_WIDTH, SLOT_CONFIG.REEL_HEIGHT, 10);
-    this.background.endFill();
-    
-    // Draw border
-    this.background.lineStyle(3, config.color, 1);
-    this.background.drawRoundedRect(0, 0, SLOT_CONFIG.REEL_WIDTH, SLOT_CONFIG.REEL_HEIGHT, 10);
-  }
-
-  /**
-   * Update the visual display
-   */
-  private updateDisplay(): void {
-    // Draw border with current symbol color
-    this.drawBorder();
-    
-    console.log(`Reel ${this.reelIndex}: Displaying current position ${this.currentPosition}, symbolContainer.y: ${this.symbolContainer.y}, current symbol: ${this.state.currentSymbol}`);
-    
-    // Debug: log visible symbol information
-    const visibleSymbolIndex = Math.floor(this.currentPosition / this.animConfig.symbolHeight) % this.animConfig.totalSymbols;
-    const visibleSymbol = this.symbols[visibleSymbolIndex];
-    if (visibleSymbol) {
-      console.log(`Reel ${this.reelIndex}: Visible symbol should be index ${visibleSymbolIndex}, type: ${visibleSymbol.symbolType}, at y: ${visibleSymbol.y}`);
+  private updateCurrentSymbol(): void {
+    // Find which symbol is currently in the center
+    const centerPosition = this.SYMBOL_SIZE / 2;
+    for (const symbol of this.symbols) {
+      if (symbol.y >= 0 && symbol.y <= centerPosition) {
+        this.state.currentSymbol = symbol.symbolType;
+        break;
+      }
     }
   }
 
@@ -435,86 +348,82 @@ export class Reel extends Container {
    * Start spinning animation
    */
   spin(): void {
-    if (this.state.isSpinning || this.isAnimating) {
+    if (this.state.isSpinning) {
       console.warn(`Reel ${this.reelIndex}: Already spinning`);
       return;
     }
     
     this.state.isSpinning = true;
-    this.isAnimating = true;
-    this.animationPhase = 'accelerating';
-    this.stopRequested = false;
-    this.animConfig.spinSpeed = 0;
-    
-    // Add to ticker for animation
-    Ticker.shared.add(this.tickerFn);
-    
-    console.log(`Reel ${this.reelIndex}: Starting spin animation`);
+    console.log(`Reel ${this.reelIndex}: Starting tween-based spin`);
   }
 
   /**
-   * Stop the reel with a specific symbol or random if not specified
+   * Stop the reel with target symbol
    */
-  stop(symbol?: SymbolType): SymbolType {
-    if (!this.isAnimating) {
-      // If not spinning, just set the symbol immediately
-      const finalSymbol = symbol || SymbolGenerator.generateSymbol();
-      this.setSymbol(finalSymbol);
-      return finalSymbol;
+  stop(targetSymbol?: SymbolType): SymbolType {
+    if (!this.state.isSpinning) {
+      return this.state.currentSymbol;
     }
     
-    const finalSymbol = symbol || SymbolGenerator.generateSymbol();
+    const finalSymbol = targetSymbol || SymbolGenerator.generateSymbol();
     
-    this.targetSymbol = finalSymbol;
-    this.stopRequested = true;
+         // Calculate spin parameters (similar to PixiJS example)
+     const extra = Math.floor(Math.random() * 3); // Random extra spins
+     const baseTarget = this.reelPosition + 10 + this.reelIndex * 2 + extra;
+     const target = Math.round(baseTarget); // Ensure we land on a whole number
     
-    console.log(`Reel ${this.reelIndex}: Stop requested for ${finalSymbol}`);
+    // Animation timing (staggered based on reel index)
+    const time = 2000 + this.reelIndex * 400 + extra * 300;
+    
+    console.log(`Reel ${this.reelIndex}: Stopping at position ${target} for symbol ${finalSymbol}`);
+    
+         // Start the tween animation
+     this.currentTween = TweenManager.tweenTo(
+       this,
+       'reelPosition',
+       target,
+       time,
+       TweenManager.backout(0.5),
+       undefined, // onChange
+       () => {
+        // onComplete
+        this.state.isSpinning = false;
+        this.state.currentSymbol = finalSymbol;
+        
+        // Ensure target symbol is visible by updating one of the symbols
+        const visibleSymbols = this.symbols.filter(s => s.y >= 0 && s.y < this.SYMBOL_SIZE);
+        if (visibleSymbols.length > 0) {
+          visibleSymbols[0].updateTexture(finalSymbol);
+          this.state.currentSymbol = finalSymbol;
+        }
+        
+        console.log(`Reel ${this.reelIndex}: Stopped on ${finalSymbol}`);
+      }
+    );
     
     return finalSymbol;
   }
 
   /**
-   * Force set a specific symbol (for testing)
+   * Force set a specific symbol
    */
-  setSymbol(symbol: SymbolType): void {
-    this.state.currentSymbol = symbol;
-    this.state.isSpinning = false;
-    
-    // Stop any current animation
-    if (this.isAnimating) {
-      this.stopAnimation();
-    }
-    
-    // Ensure a symbol is visible by positioning container correctly
-    this.ensureSymbolVisible(symbol);
-    
-    this.updateDisplay();
-  }
-
-  /**
-   * Ensure a specific symbol is visible in the reel window
-   */
-  private ensureSymbolVisible(targetSymbol: SymbolType): void {
-    // Find the symbol in our array
-    let symbolIndex = this.symbols.findIndex(s => s.symbolType === targetSymbol);
-    
-    // If not found, replace the first symbol
-    if (symbolIndex === -1) {
-      this.symbols[0].destroy();
-      this.symbols[0] = new SymbolDisplay(targetSymbol, this.useTextures);
-      this.symbols[0].y = 0; // First symbol at y=0
-      this.symbolContainer.addChild(this.symbols[0]);
-      symbolIndex = 0;
-    }
-    
-    // Position container to show this symbol
-    // Since symbols are at negative Y positions (-index * height), 
-    // we need positive container Y to show them
-    this.currentPosition = symbolIndex * this.animConfig.symbolHeight;
-    this.symbolContainer.y = this.currentPosition;
-    
-    console.log(`Reel ${this.reelIndex}: Positioned symbol ${targetSymbol} at index ${symbolIndex}, position ${this.currentPosition}`);
-  }
+     setSymbol(symbol: SymbolType): void {
+     this.state.currentSymbol = symbol;
+     this.state.isSpinning = false;
+     
+     // Cancel any current tween
+     if (this.currentTween) {
+       // The tween will be automatically removed by TweenManager
+       this.currentTween = undefined;
+     }
+     
+     // Update first visible symbol
+     if (this.symbols.length > 0) {
+       this.symbols[0].updateTexture(symbol);
+     }
+     
+     this.updateDisplay();
+   }
 
   /**
    * Get the current symbol
@@ -534,23 +443,37 @@ export class Reel extends Container {
    * Highlight the reel (for wins)
    */
   highlight(isHighlighted: boolean): void {
-    if (isHighlighted) {
-      this.alpha = 1.0;
-      // Could add glow effect here
-    } else {
-      this.alpha = 1.0;
-    }
+    this.alpha = isHighlighted ? 1.0 : 1.0;
+    // Could add glow effect here
   }
 
   /**
-   * Clean up resources when reel is destroyed
+   * Draw the reel border
+   */
+  private drawBorder(): void {
+    const config = SYMBOL_CONFIGS[this.state.currentSymbol];
+    
+    this.background.clear();
+    this.background.beginFill(config.color, 0.3);
+    this.background.drawRoundedRect(0, 0, SLOT_CONFIG.REEL_WIDTH, SLOT_CONFIG.REEL_HEIGHT, 10);
+    this.background.endFill();
+    this.background.lineStyle(3, config.color, 1);
+    this.background.drawRoundedRect(0, 0, SLOT_CONFIG.REEL_WIDTH, SLOT_CONFIG.REEL_HEIGHT, 10);
+  }
+
+  /**
+   * Update the visual display
+   */
+  private updateDisplay(): void {
+    this.drawBorder();
+  }
+
+  /**
+   * Clean up resources
    */
   destroy(): void {
-    // Remove from ticker if still animating
-    if (this.isAnimating) {
-      Ticker.shared.remove(this.tickerFn);
-    }
-    
+    // Remove from ticker
+    Ticker.shared.remove(this.updateSymbolPositions.bind(this));
     super.destroy();
   }
 } 
