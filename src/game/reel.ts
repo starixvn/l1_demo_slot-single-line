@@ -211,8 +211,9 @@ export class Reel extends Container {
       const symbol = SymbolGenerator.generateSymbol();
       const symbolDisplay = new SymbolDisplay(symbol, this.useTextures);
       
-      // Position symbols vertically
-      symbolDisplay.y = i * this.animConfig.symbolHeight;
+      // Position symbols vertically - reversed for top-to-bottom movement
+      // Symbol 0 at y=0, Symbol 1 at y=-200 (above), Symbol 2 at y=-400 (above), etc.
+      symbolDisplay.y = -i * this.animConfig.symbolHeight;
       
       this.symbolContainer.addChild(symbolDisplay);
       this.symbols.push(symbolDisplay);
@@ -233,7 +234,8 @@ export class Reel extends Container {
    * Update the current symbol based on container position
    */
   private updateCurrentSymbol(): void {
-    // Calculate which symbol is currently visible (aligned with reel center)
+    // Calculate which symbol is currently visible
+    // Since symbols are at negative Y positions, we use the position directly
     const visiblePosition = this.currentPosition % (this.animConfig.totalSymbols * this.animConfig.symbolHeight);
     const symbolIndex = Math.floor(visiblePosition / this.animConfig.symbolHeight) % this.animConfig.totalSymbols;
     const symbolDisplay = this.symbols[symbolIndex];
@@ -291,9 +293,10 @@ export class Reel extends Container {
         break;
     }
     
-    // Update position
+    // Update position - for top to bottom movement
     this.currentPosition += this.animConfig.spinSpeed * deltaTime;
-    this.symbolContainer.y = -this.currentPosition; // Container moves UP to show symbols moving DOWN
+    // Since symbols are at negative Y positions, container needs positive Y to show them
+    this.symbolContainer.y = this.currentPosition;
     
     // Apply visual effects based on speed
     this.updateVisualEffects();
@@ -377,7 +380,7 @@ export class Reel extends Container {
     } else {
       // Snap to exact position and make sure a symbol is visible
       this.currentPosition = this.targetPosition % (this.animConfig.totalSymbols * this.animConfig.symbolHeight);
-      this.symbolContainer.y = -this.currentPosition; // Consistent with animation positioning
+      this.symbolContainer.y = this.currentPosition; // Consistent with animation positioning
       this.updateCurrentSymbol();
     }
     
@@ -499,16 +502,16 @@ export class Reel extends Container {
     if (symbolIndex === -1) {
       this.symbols[0].destroy();
       this.symbols[0] = new SymbolDisplay(targetSymbol, this.useTextures);
-      this.symbols[0].y = 0;
+      this.symbols[0].y = 0; // First symbol at y=0
       this.symbolContainer.addChild(this.symbols[0]);
       symbolIndex = 0;
     }
     
     // Position container to show this symbol
-    // To show symbol at index N, we need currentPosition = N * symbolHeight
-    // and symbolContainer.y = -currentPosition
+    // Since symbols are at negative Y positions (-index * height), 
+    // we need positive container Y to show them
     this.currentPosition = symbolIndex * this.animConfig.symbolHeight;
-    this.symbolContainer.y = -this.currentPosition;
+    this.symbolContainer.y = this.currentPosition;
     
     console.log(`Reel ${this.reelIndex}: Positioned symbol ${targetSymbol} at index ${symbolIndex}, position ${this.currentPosition}`);
   }
