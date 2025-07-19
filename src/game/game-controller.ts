@@ -2,6 +2,8 @@ import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { CombatSystem } from './combat-system';
 import { SymbolType, GameState } from '@/types/slot-types';
 import { GameLoopManager } from '@/systems/game-loop-manager';
+import { PlayerInfoDisplay } from '@/ui/player-info-display';
+import { SettingsPanel } from '@/ui/settings-panel';
 
 /**
  * Game controller that manages user interactions and game flow
@@ -14,6 +16,8 @@ export class GameController extends Container {
   private buttonContainer!: Container;
   private statusText!: Text;
   private gameLoopManager: GameLoopManager;
+  private playerInfoDisplay!: PlayerInfoDisplay;
+  private settingsPanel!: SettingsPanel;
 
   constructor() {
     super();
@@ -22,6 +26,7 @@ export class GameController extends Container {
     
     this.setupGameController();
     this.setupGameLoopListeners();
+    this.setupUIComponents();
   }
 
   /**
@@ -46,6 +51,44 @@ export class GameController extends Container {
     this.createStatusDisplay();
     
     console.log('GameController: Initialized');
+  }
+
+  /**
+   * Set up additional UI components
+   */
+  private setupUIComponents(): void {
+    // Create player info display
+    this.playerInfoDisplay = new PlayerInfoDisplay();
+    this.addChild(this.playerInfoDisplay);
+    
+    // Create settings panel
+    this.settingsPanel = new SettingsPanel();
+    this.addChild(this.settingsPanel);
+    
+    // Position UI elements based on screen size
+    this.positionUIElements();
+    
+    console.log('GameController: UI components setup complete');
+  }
+
+  /**
+   * Position UI elements relative to the game area
+   */
+  private positionUIElements(): void {
+    // Position player info display at bottom of screen
+    const infoSize = this.playerInfoDisplay.getDisplaySize();
+    this.playerInfoDisplay.setDisplayPosition(
+      -infoSize.width / 2,  // Center horizontally
+      350  // Bottom of game area
+    );
+    
+    // Position settings gear button in top-right corner
+    this.settingsPanel.setPosition(380, -280);
+    
+    // Set popup center position (center of screen)
+    this.settingsPanel.setPopupCenter(0, 0);
+    
+    console.log('GameController: UI elements positioned');
   }
 
   /**
@@ -213,11 +256,20 @@ export class GameController extends Container {
     }
     
     const currentState = this.gameLoopManager.getCurrentState();
-    console.log(`GameController: ${currentState === GameState.RESPINNING ? 'Respin' : 'Spin'} initiated`);
+    const isRespin = currentState === GameState.RESPINNING;
+    console.log(`GameController: ${isRespin ? 'Respin' : 'Spin'} initiated`);
+    
+    // Reset win display at start of new spin (but not respin)
+    if (!isRespin) {
+      this.playerInfoDisplay.resetWin();
+    }
     
     try {
       const { spinResult, combatResults } = await this.combatSystem.performCombatSpin();
       console.log('GameController: Combat results:', { spinResult, combatResults });
+      
+      // Update player info display with spin results
+      this.updatePlayerInfoFromSpin(spinResult, combatResults, isRespin);
       
       // Log detailed combat information
       if (combatResults.length > 0) {
@@ -232,6 +284,35 @@ export class GameController extends Container {
     } catch (error) {
       console.error('GameController: Combat error:', error);
     }
+  }
+
+  /**
+   * Update player info display based on spin results
+   */
+  private updatePlayerInfoFromSpin(spinResult: any, combatResults: any[], isRespin: boolean): void {
+    // Update balance from game loop manager
+    const gameState = this.gameLoopManager.getGameState();
+    this.playerInfoDisplay.updateBalance(gameState.balance);
+    
+    // Update bet amount (only deducted on regular spins, not respins)
+    if (!isRespin) {
+      this.playerInfoDisplay.updateBet(10); // Default bet amount
+    }
+    
+    // Calculate total win from spin result and combat rewards
+    let totalWin = spinResult.payout || 0;
+    if (combatResults && combatResults.length > 0) {
+      const combatRewards = combatResults.reduce((sum, result) => 
+        sum + (result.rewards?.coins || 0), 0);
+      totalWin += combatRewards;
+    }
+    
+    // Update win display
+    if (totalWin > 0) {
+      this.playerInfoDisplay.updateWin(totalWin);
+    }
+    
+    console.log(`GameController: Updated player info - Balance: ${gameState.balance}, Win: ${totalWin}`);
   }
   
   /**
@@ -267,6 +348,16 @@ export class GameController extends Container {
     // Reset reel highlights and combat
     this.combatSystem.getSlotMachine().getReels().forEach(reel => reel.highlight(false));
     this.combatSystem.resetCombat();
+    
+    // Reset player info display
+    this.playerInfoDisplay.resetStats();
+    
+    // Update player info with current game state
+    const gameState = this.gameLoopManager.getGameState();
+    this.playerInfoDisplay.updateBalance(gameState.balance);
+    
+    // Update displays
+    this.updateStatusDisplay();
   }
   
   /**
@@ -298,9 +389,28 @@ export class GameController extends Container {
       case 'r':
         this.handleReset();
         break;
+      case 's':
+      case 'escape':
+        // Toggle settings panel
+        this.settingsPanel.togglePopup();
+        break;
       default:
         break;
     }
+  }
+
+  /**
+   * Get player info display for external access
+   */
+  getPlayerInfoDisplay(): PlayerInfoDisplay {
+    return this.playerInfoDisplay;
+  }
+
+  /**
+   * Get settings panel for external access
+   */
+  getSettingsPanel(): SettingsPanel {
+    return this.settingsPanel;
   }
   
   /**
