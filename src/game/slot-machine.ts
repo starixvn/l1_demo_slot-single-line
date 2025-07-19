@@ -213,26 +213,8 @@ export class SlotMachine extends Container {
       }
     }
     
-    // Check for bonus symbols
-    if (symbolCounts[SymbolType.BONUS] >= 2) {
-      isWin = true;
-      winType = WinType.BONUS_TRIGGER;
-      winningSymbols.push(SymbolType.BONUS);
-      payout += 100; // Bonus payout
-    }
-    
-    // Check for wild symbols (substitute for highest value symbol)
-    if (symbolCounts[SymbolType.WILD] >= 1 && !isWin) {
-      const otherSymbols = symbols.filter(s => s !== SymbolType.WILD);
-      if (otherSymbols.length >= 2 && otherSymbols[0] === otherSymbols[1]) {
-        isWin = true;
-        winType = WinType.WILD_WIN;
-        winningSymbols = [otherSymbols[0], SymbolType.WILD];
-        
-        const config = SYMBOL_CONFIGS[otherSymbols[0]];
-        payout = config.value * 2; // Double payout with wild
-      }
-    }
+    // All wins are now based on three of a kind only
+    // No special symbol logic needed
     
     return {
       reels: reelResults,
@@ -264,12 +246,6 @@ export class SlotMachine extends Container {
       switch (result.winType) {
         case WinType.THREE_OF_A_KIND:
           message = `🎉 THREE ${symbolNames.toUpperCase()}! 🎉`;
-          break;
-        case WinType.BONUS_TRIGGER:
-          message = '🎁 BONUS TRIGGERED! 🎁';
-          break;
-        case WinType.WILD_WIN:
-          message = `🌟 WILD WIN: ${symbolNames}! 🌟`;
           break;
         default:
           message = '🎊 YOU WIN! 🎊';

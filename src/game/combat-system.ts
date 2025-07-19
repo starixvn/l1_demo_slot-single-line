@@ -252,11 +252,12 @@ export class CombatSystem extends Container {
   private isWeaponSymbol(symbol: SymbolType): boolean {
     return [
       SymbolType.IRON_SWORD,
-      SymbolType.STEEL_SWORD,
+      SymbolType.BRONZE_AXE,
       SymbolType.SILVER_SWORD,
-      SymbolType.GOLD_SWORD,
+      SymbolType.IRON_AXE,
       SymbolType.CRUSADER_BLADE,
-      SymbolType.WILD, // Wild can be a weapon
+      SymbolType.WAR_HAMMER,
+      SymbolType.MAGIC_STAFF,
     ].includes(symbol);
   }
   

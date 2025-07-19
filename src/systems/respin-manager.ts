@@ -19,10 +19,12 @@ export class RespinManager {
   // Active symbols that can trigger respins (weapon symbols)
   private readonly ACTIVE_SYMBOLS: Set<SymbolType> = new Set([
     SymbolType.IRON_SWORD,
-    SymbolType.STEEL_SWORD,
+    SymbolType.BRONZE_AXE,
     SymbolType.SILVER_SWORD,
-    SymbolType.GOLD_SWORD,
+    SymbolType.IRON_AXE,
     SymbolType.CRUSADER_BLADE,
+    SymbolType.WAR_HAMMER,
+    SymbolType.MAGIC_STAFF,
   ]);
 
   private constructor() {}

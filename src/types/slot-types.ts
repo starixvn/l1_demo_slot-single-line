@@ -2,17 +2,14 @@
  * Symbol types in the slot game
  */
 export enum SymbolType {
-  // Weapon symbols (ordered by rarity - common to rare)
-  IRON_SWORD = 'iron_sword',
-  STEEL_SWORD = 'steel_sword',
-  SILVER_SWORD = 'silver_sword',
-  GOLD_SWORD = 'gold_sword',
-  CRUSADER_BLADE = 'crusader_blade',
-  
-  // Special symbols
-  BONUS = 'bonus',
-  WILD = 'wild',
-  SCATTER = 'scatter',
+  // Weapon symbols (ordered by damage - low to high)
+  IRON_SWORD = 'iron_sword',        // 1 HP damage
+  BRONZE_AXE = 'bronze_axe',        // 2 HP damage
+  SILVER_SWORD = 'silver_sword',    // 3 HP damage
+  IRON_AXE = 'iron_axe',           // 4 HP damage
+  CRUSADER_BLADE = 'crusader_blade', // 5 HP damage
+  WAR_HAMMER = 'war_hammer',        // 6 HP damage
+  MAGIC_STAFF = 'magic_staff',      // 6-9 HP damage (random)
 }
 
 /**
@@ -64,8 +61,6 @@ export interface SpinResult {
 export enum WinType {
   NO_WIN = 'no_win',
   THREE_OF_A_KIND = 'three_of_a_kind',
-  BONUS_TRIGGER = 'bonus_trigger',
-  WILD_WIN = 'wild_win',
 }
 
 /**

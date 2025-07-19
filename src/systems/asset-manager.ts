@@ -8,6 +8,7 @@ import type {
   AssetEventType 
 } from '@/types/game-types';
 import { GAME_CONSTANTS } from '@/config/game-config';
+import { SymbolType } from '@/types/slot-types';
 
 /**
  * High-performance asset manager for PIXI.js with error handling and caching
@@ -259,3 +260,58 @@ export class AssetManager extends EventTarget {
     }));
   }
 } 
+
+/**
+ * Symbol asset definitions
+ */
+const SYMBOL_ASSETS = {
+  [SymbolType.IRON_SWORD]: 'src/assets/images/symbols/iron-sword.jpeg',
+  [SymbolType.BRONZE_AXE]: 'src/assets/images/symbols/bronze-axe.jpeg', 
+  [SymbolType.SILVER_SWORD]: 'src/assets/images/symbols/silver-sword.jpeg',
+  [SymbolType.IRON_AXE]: 'src/assets/images/symbols/iron-axe.jpeg',
+  [SymbolType.CRUSADER_BLADE]: 'src/assets/images/symbols/crusader-blade.jpeg',
+  [SymbolType.WAR_HAMMER]: 'src/assets/images/symbols/war-hammer.jpeg',
+  [SymbolType.MAGIC_STAFF]: 'src/assets/images/symbols/magic-staff.jpeg',
+} as const;
+
+/**
+ * Loaded symbol textures
+ */
+const symbolTextures: Map<SymbolType, Texture> = new Map();
+
+/**
+ * Load all symbol assets
+ */
+export const loadSymbolAssets = async (): Promise<void> => {
+  try {
+    console.log('Loading symbol assets...');
+    
+    // Load all symbol textures
+    const symbolPromises = Object.entries(SYMBOL_ASSETS).map(async ([symbolType, path]) => {
+      const texture = await Assets.load(path);
+      symbolTextures.set(symbolType as SymbolType, texture);
+      console.log(`Loaded symbol: ${symbolType}`);
+    });
+    
+    await Promise.all(symbolPromises);
+    console.log('All symbol assets loaded successfully');
+    
+  } catch (error) {
+    console.error('Error loading symbol assets:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get texture for a symbol
+ */
+export const getSymbolTexture = (symbolType: SymbolType): Texture | null => {
+  return symbolTextures.get(symbolType) || null;
+};
+
+/**
+ * Check if symbol textures are loaded
+ */
+export const areSymbolTexturesLoaded = (): boolean => {
+  return symbolTextures.size === Object.keys(SYMBOL_ASSETS).length;
+}; 

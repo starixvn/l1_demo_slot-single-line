@@ -59,6 +59,11 @@ async function initializeGame(): Promise<void> {
     // Load game assets
     console.log('📦 Loading game assets...');
     await gameApp.getAssetManager().loadAssets(EXAMPLE_ASSETS);
+    
+    // Load symbol assets for weapon images
+    console.log('⚔️ Loading symbol assets...');
+    const { loadSymbolAssets } = await import('@/systems/asset-manager');
+    await loadSymbolAssets();
 
     // Start the game
     gameApp.start();

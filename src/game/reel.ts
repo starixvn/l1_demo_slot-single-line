@@ -1,6 +1,7 @@
-import { Container, Graphics, Text, TextStyle } from 'pixi.js';
+import { Container, Graphics, Text, TextStyle, Sprite } from 'pixi.js';
 import { SymbolType, ReelState } from '@/types/slot-types';
 import { SymbolGenerator, SYMBOL_CONFIGS, SLOT_CONFIG } from '@/config/symbol-config';
+import { getSymbolTexture, areSymbolTexturesLoaded } from '@/systems/asset-manager';
 
 /**
  * Individual reel class that displays and manages symbols
@@ -11,8 +12,10 @@ export class Reel extends Container {
   private background!: Graphics;
   private symbolText!: Text;
   private symbolEmoji!: Text;
+  private symbolSprite!: Sprite;
   private textStyle: TextStyle;
   private emojiStyle: TextStyle;
+  private useTextures: boolean = false;
 
   constructor(reelIndex: number, x: number, y: number) {
     super();
@@ -28,6 +31,9 @@ export class Reel extends Container {
       position: x,
       index: reelIndex,
     };
+    
+    // Check if we should use textures
+    this.useTextures = areSymbolTexturesLoaded();
     
     // Create text styles
     this.textStyle = new TextStyle({
@@ -58,19 +64,34 @@ export class Reel extends Container {
     this.background = new Graphics();
     this.addChild(this.background);
     
-    // Create symbol emoji display
-    this.symbolEmoji = new Text('', this.emojiStyle);
-    this.symbolEmoji.anchor.set(0.5, 0.5);
-    this.symbolEmoji.x = SLOT_CONFIG.REEL_WIDTH / 2;
-    this.symbolEmoji.y = SLOT_CONFIG.REEL_HEIGHT / 2 - 20;
-    this.addChild(this.symbolEmoji);
-    
-    // Create symbol name text
-    this.symbolText = new Text('', this.textStyle);
-    this.symbolText.anchor.set(0.5, 0);
-    this.symbolText.x = SLOT_CONFIG.REEL_WIDTH / 2;
-    this.symbolText.y = SLOT_CONFIG.REEL_HEIGHT / 2 + 30;
-    this.addChild(this.symbolText);
+    if (this.useTextures) {
+      // Create symbol sprite for texture display
+      this.symbolSprite = new Sprite();
+      this.symbolSprite.anchor.set(0.5, 0.5);
+      this.symbolSprite.x = SLOT_CONFIG.REEL_WIDTH / 2;
+      this.symbolSprite.y = SLOT_CONFIG.REEL_HEIGHT / 2;
+      this.addChild(this.symbolSprite);
+      
+      // Create smaller text display for weapon name
+      this.symbolText = new Text('', this.textStyle);
+      this.symbolText.anchor.set(0.5, 0);
+      this.symbolText.x = SLOT_CONFIG.REEL_WIDTH / 2;
+      this.symbolText.y = SLOT_CONFIG.REEL_HEIGHT - 25;
+      this.addChild(this.symbolText);
+    } else {
+      // Fallback to emoji + text display
+      this.symbolEmoji = new Text('', this.emojiStyle);
+      this.symbolEmoji.anchor.set(0.5, 0.5);
+      this.symbolEmoji.x = SLOT_CONFIG.REEL_WIDTH / 2;
+      this.symbolEmoji.y = SLOT_CONFIG.REEL_HEIGHT / 2 - 20;
+      this.addChild(this.symbolEmoji);
+      
+      this.symbolText = new Text('', this.textStyle);
+      this.symbolText.anchor.set(0.5, 0);
+      this.symbolText.x = SLOT_CONFIG.REEL_WIDTH / 2;
+      this.symbolText.y = SLOT_CONFIG.REEL_HEIGHT / 2 + 30;
+      this.addChild(this.symbolText);
+    }
     
     // Add border
     this.drawBorder();
@@ -106,17 +127,41 @@ export class Reel extends Container {
   private updateDisplay(): void {
     const config = SYMBOL_CONFIGS[this.state.currentSymbol];
     
-    // Update emoji
-    this.symbolEmoji.text = config.emoji || '❓';
-    
-    // Update text
-    this.symbolText.text = config.name;
-    this.symbolText.style.fill = config.textColor;
+    if (this.useTextures && this.symbolSprite) {
+      // Use texture if available
+      const texture = getSymbolTexture(this.state.currentSymbol);
+      if (texture) {
+        this.symbolSprite.texture = texture;
+        
+        // Scale sprite to fit within reel bounds with some padding
+        const maxSize = Math.min(SLOT_CONFIG.REEL_WIDTH - 40, SLOT_CONFIG.REEL_HEIGHT - 60);
+        const scale = Math.min(maxSize / texture.width, maxSize / texture.height);
+        this.symbolSprite.scale.set(scale);
+        
+        // Update text with damage info
+        this.symbolText.text = `${config.name}\n${config.value} HP`;
+        this.symbolText.style.fill = config.textColor;
+      } else {
+        // Fallback to emoji if texture not found
+        console.warn(`Texture not found for ${this.state.currentSymbol}, using emoji fallback`);
+        this.symbolSprite.texture = null as any;
+        this.symbolText.text = `${config.emoji || '❓'}\n${config.name}`;
+        this.symbolText.style.fill = config.textColor;
+      }
+    } else {
+      // Use emoji + text fallback
+      if (this.symbolEmoji) {
+        this.symbolEmoji.text = config.emoji || '❓';
+      }
+      
+      this.symbolText.text = config.name;
+      this.symbolText.style.fill = config.textColor;
+    }
     
     // Update background
     this.drawBorder();
     
-    console.log(`Reel ${this.reelIndex}: Displaying ${config.name} (${config.emoji})`);
+    console.log(`Reel ${this.reelIndex}: Displaying ${config.name} (${config.value} HP)`);
   }
   
   /**

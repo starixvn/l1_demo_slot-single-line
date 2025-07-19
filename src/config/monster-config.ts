@@ -16,7 +16,7 @@ export const MONSTER_CONFIGS: Record<MonsterType, MonsterConfig> = {
       coins: 25,
       experience: 10,
     },
-    weakTo: [SymbolType.IRON_SWORD, SymbolType.STEEL_SWORD],
+    weakTo: [SymbolType.IRON_SWORD, SymbolType.BRONZE_AXE],
     resistantTo: [],
   },
   
@@ -31,7 +31,7 @@ export const MONSTER_CONFIGS: Record<MonsterType, MonsterConfig> = {
       coins: 50,
       experience: 25,
     },
-    weakTo: [SymbolType.STEEL_SWORD, SymbolType.SILVER_SWORD],
+    weakTo: [SymbolType.BRONZE_AXE, SymbolType.SILVER_SWORD],
     resistantTo: [SymbolType.IRON_SWORD],
   },
   
@@ -46,8 +46,8 @@ export const MONSTER_CONFIGS: Record<MonsterType, MonsterConfig> = {
       coins: 100,
       experience: 50,
     },
-    weakTo: [SymbolType.SILVER_SWORD, SymbolType.GOLD_SWORD],
-    resistantTo: [SymbolType.IRON_SWORD, SymbolType.STEEL_SWORD],
+    weakTo: [SymbolType.SILVER_SWORD, SymbolType.IRON_AXE],
+    resistantTo: [SymbolType.IRON_SWORD, SymbolType.BRONZE_AXE],
   },
   
   [MonsterType.DRAGON]: {
@@ -61,8 +61,8 @@ export const MONSTER_CONFIGS: Record<MonsterType, MonsterConfig> = {
       coins: 250,
       experience: 100,
     },
-    weakTo: [SymbolType.GOLD_SWORD, SymbolType.CRUSADER_BLADE],
-    resistantTo: [SymbolType.IRON_SWORD, SymbolType.STEEL_SWORD, SymbolType.SILVER_SWORD],
+    weakTo: [SymbolType.CRUSADER_BLADE, SymbolType.WAR_HAMMER],
+    resistantTo: [SymbolType.IRON_SWORD, SymbolType.BRONZE_AXE, SymbolType.SILVER_SWORD],
   },
   
   [MonsterType.DEMON_LORD]: {
@@ -76,8 +76,8 @@ export const MONSTER_CONFIGS: Record<MonsterType, MonsterConfig> = {
       coins: 500,
       experience: 200,
     },
-    weakTo: [SymbolType.CRUSADER_BLADE],
-    resistantTo: [SymbolType.IRON_SWORD, SymbolType.STEEL_SWORD, SymbolType.SILVER_SWORD, SymbolType.GOLD_SWORD],
+    weakTo: [SymbolType.CRUSADER_BLADE, SymbolType.MAGIC_STAFF],
+    resistantTo: [SymbolType.IRON_SWORD, SymbolType.BRONZE_AXE, SymbolType.SILVER_SWORD, SymbolType.IRON_AXE],
   },
 };
 
@@ -89,13 +89,12 @@ export const CRITICAL_HIT_CONFIG: CriticalHitConfig = {
   multiplier: 2.0, // 2x damage on critical hits
   weaponModifiers: {
     [SymbolType.IRON_SWORD]: 0, // No modifier
-    [SymbolType.STEEL_SWORD]: 2, // +2% crit chance
+    [SymbolType.BRONZE_AXE]: 2, // +2% crit chance
     [SymbolType.SILVER_SWORD]: 5, // +5% crit chance
-    [SymbolType.GOLD_SWORD]: 10, // +10% crit chance
-    [SymbolType.CRUSADER_BLADE]: 20, // +20% crit chance
-    [SymbolType.BONUS]: 0,
-    [SymbolType.WILD]: 15, // Wild gets bonus crit chance
-    [SymbolType.SCATTER]: 0,
+    [SymbolType.IRON_AXE]: 8, // +8% crit chance
+    [SymbolType.CRUSADER_BLADE]: 15, // +15% crit chance
+    [SymbolType.WAR_HAMMER]: 20, // +20% crit chance
+    [SymbolType.MAGIC_STAFF]: 25, // +25% crit chance (magical weapon)
   },
 };
 
@@ -127,16 +126,27 @@ export const HP_BAR_CONFIG: HpBarConfig = {
 
 /**
  * Weapon damage values against monsters
+ * Note: MAGIC_STAFF has variable damage (6-9), so we use average for base calculations
  */
 export const WEAPON_DAMAGE: Record<SymbolType, number> = {
-  [SymbolType.IRON_SWORD]: 15,
-  [SymbolType.STEEL_SWORD]: 25,
-  [SymbolType.SILVER_SWORD]: 40,
-  [SymbolType.GOLD_SWORD]: 60,
-  [SymbolType.CRUSADER_BLADE]: 100,
-  [SymbolType.BONUS]: 0, // Bonus symbols don't deal damage
-  [SymbolType.WILD]: 35, // Wild does average damage
-  [SymbolType.SCATTER]: 0,
+  [SymbolType.IRON_SWORD]: 1,
+  [SymbolType.BRONZE_AXE]: 2,
+  [SymbolType.SILVER_SWORD]: 3,
+  [SymbolType.IRON_AXE]: 4,
+  [SymbolType.CRUSADER_BLADE]: 5,
+  [SymbolType.WAR_HAMMER]: 6,
+  [SymbolType.MAGIC_STAFF]: 7.5, // Average of 6-9 damage range
+};
+
+/**
+ * Get the actual damage for a weapon (handles variable damage for MAGIC_STAFF)
+ */
+export const getWeaponDamage = (weapon: SymbolType): number => {
+  if (weapon === SymbolType.MAGIC_STAFF) {
+    // Random damage between 6-9 for Magic Staff
+    return Math.floor(Math.random() * 4) + 6; // 6, 7, 8, or 9
+  }
+  return WEAPON_DAMAGE[weapon] || 0;
 };
 
 /**
@@ -167,7 +177,7 @@ export class CombatCalculator {
     isWeakness: boolean;
     isResisted: boolean;
   } {
-    const baseDamage = WEAPON_DAMAGE[weapon] || 0;
+    const baseDamage = getWeaponDamage(weapon); // Use helper for variable damage
     const monsterConfig = MONSTER_CONFIGS[monster];
     
     let multiplier = 1.0;

@@ -3,86 +3,77 @@ import { SymbolType, SymbolConfig } from '@/types/slot-types';
 /**
  * Symbol configurations with probabilities and display properties
  * Probabilities are weights - higher numbers = more common
+ * Higher damage weapons have lower probability (rarer)
  */
 export const SYMBOL_CONFIGS: Record<SymbolType, SymbolConfig> = {
   [SymbolType.IRON_SWORD]: {
     type: SymbolType.IRON_SWORD,
     name: 'Iron Sword',
-    value: 10,
-    probability: 35, // Most common weapon
-    color: 0x8C7853, // Brown-ish
+    value: 1, // 1 HP damage
+    probability: 40, // Most common weapon (40% of total weight)
+    color: 0x8C7853, // Brown-ish iron
     textColor: 0xFFFFFF,
     emoji: '⚔️',
   },
   
-  [SymbolType.STEEL_SWORD]: {
-    type: SymbolType.STEEL_SWORD,
-    name: 'Steel Sword',
-    value: 25,
-    probability: 25, // Common
-    color: 0x71797E, // Steel gray
+  [SymbolType.BRONZE_AXE]: {
+    type: SymbolType.BRONZE_AXE,
+    name: 'Bronze Axe',
+    value: 2, // 2 HP damage
+    probability: 30, // Common (30% of total weight)
+    color: 0xCD7F32, // Bronze color
     textColor: 0xFFFFFF,
-    emoji: '🗡️',
+    emoji: '🪓',
   },
   
   [SymbolType.SILVER_SWORD]: {
     type: SymbolType.SILVER_SWORD,
     name: 'Silver Sword',
-    value: 50,
-    probability: 20, // Uncommon
+    value: 3, // 3 HP damage
+    probability: 20, // Uncommon (20% of total weight)
     color: 0xC0C0C0, // Silver
     textColor: 0x000000,
     emoji: '⚔️',
   },
   
-  [SymbolType.GOLD_SWORD]: {
-    type: SymbolType.GOLD_SWORD,
-    name: 'Gold Sword',
-    value: 100,
-    probability: 12, // Rare
-    color: 0xFFD700, // Gold
-    textColor: 0x000000,
-    emoji: '🗡️',
+  [SymbolType.IRON_AXE]: {
+    type: SymbolType.IRON_AXE,
+    name: 'Iron Axe',
+    value: 4, // 4 HP damage
+    probability: 15, // Rare (15% of total weight)
+    color: 0x5A5A5A, // Dark iron/steel
+    textColor: 0xFFFFFF,
+    emoji: '🪓',
   },
   
   [SymbolType.CRUSADER_BLADE]: {
     type: SymbolType.CRUSADER_BLADE,
     name: 'Crusader Blade',
-    value: 250,
-    probability: 5, // Very rare
-    color: 0x9B59B6, // Purple
+    value: 5, // 5 HP damage
+    probability: 10, // Very rare (10% of total weight)
+    color: 0x9B59B6, // Purple/holy
     textColor: 0xFFFFFF,
     emoji: '⚔️',
   },
   
-  [SymbolType.BONUS]: {
-    type: SymbolType.BONUS,
-    name: 'Bonus',
-    value: 0, // Triggers bonus round
-    probability: 8, // Special symbol
-    color: 0xE74C3C, // Red
+  [SymbolType.WAR_HAMMER]: {
+    type: SymbolType.WAR_HAMMER,
+    name: 'War Hammer',
+    value: 6, // 6 HP damage
+    probability: 7, // Extremely rare (7% of total weight)
+    color: 0x8B4513, // Dark brown/handle
     textColor: 0xFFFFFF,
-    emoji: '🎁',
+    emoji: '🔨',
   },
   
-  [SymbolType.WILD]: {
-    type: SymbolType.WILD,
-    name: 'Wild',
-    value: 0, // Substitutes for other symbols
-    probability: 6, // Rare special
-    color: 0x2ECC71, // Green
+  [SymbolType.MAGIC_STAFF]: {
+    type: SymbolType.MAGIC_STAFF,
+    name: 'Magic Staff',
+    value: 7.5, // 6-9 HP damage (average for calculations)
+    probability: 3, // Legendary (3% of total weight)
+    color: 0x4B0082, // Indigo/magical
     textColor: 0xFFFFFF,
-    emoji: '🌟',
-  },
-  
-  [SymbolType.SCATTER]: {
-    type: SymbolType.SCATTER,
-    name: 'Scatter',
-    value: 0, // Special payout rules
-    probability: 4, // Very rare special
-    color: 0x3498DB, // Blue
-    textColor: 0xFFFFFF,
-    emoji: '💎',
+    emoji: '🔮',
   },
 };
 
