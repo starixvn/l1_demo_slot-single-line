@@ -162,14 +162,48 @@ export class SlotMachine extends Container {
     // Start spinning all reels
     this.reels.forEach(reel => reel.spin());
     
-    // For POC: Instant stop after a brief delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Wait for initial spin-up time
+    await new Promise(resolve => setTimeout(resolve, 800));
     
-    // Stop reels and get results
-    const reelResults: ReelResult[] = this.reels.map((reel, index) => ({
-      symbol: reel.stop(),
-      reelIndex: index,
-    }));
+    // Generate final symbols for each reel
+    const targetSymbols: SymbolType[] = this.reels.map(() => SymbolGenerator.generateSymbol());
+    
+    // Stop reels with staggered timing for realistic effect
+    const reelResults: ReelResult[] = [];
+    const stopDelay = 600; // Base delay between reel stops
+    
+    for (let i = 0; i < this.reels.length; i++) {
+      const reel = this.reels[i];
+      const targetSymbol = targetSymbols[i];
+      
+      // Stop this reel after a delay
+      setTimeout(() => {
+        const finalSymbol = reel.stop(targetSymbol);
+        reelResults[i] = {
+          symbol: finalSymbol,
+          reelIndex: i,
+        };
+        
+                 // Check if all reels have stopped
+         if (reelResults.filter(r => r).length === this.reels.length) {
+           // All reels stopped - we'll handle result in the main flow
+         }
+      }, i * stopDelay);
+    }
+    
+    // Wait for all reels to stop before continuing
+    await new Promise(resolve => {
+      const checkStopped = () => {
+        // Check if all reels have actually finished their animations
+        const allStopped = this.reels.every(reel => !reel.isSpinning());
+        if (allStopped && reelResults.filter(r => r).length === this.reels.length) {
+          resolve(void 0);
+        } else {
+          setTimeout(checkStopped, 100);
+        }
+      };
+      checkStopped();
+    });
     
     this.isSpinning = false;
     
@@ -256,7 +290,7 @@ export class SlotMachine extends Container {
       
       // Highlight winning reels
       this.reels.forEach(reel => {
-        const isWinningReel = result.winningSymbols?.includes(reel.getCurrentSymbol());
+        const isWinningReel = result.winningSymbols?.includes(reel.getCurrentSymbol()) || false;
         reel.highlight(isWinningReel);
       });
       
