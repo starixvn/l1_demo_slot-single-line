@@ -1,7 +1,8 @@
-import { Container, Graphics, Text, TextStyle } from 'pixi.js';
+import { Container, Graphics, Text, TextStyle, Sprite } from 'pixi.js';
 import { MonsterType, MonsterState, CombatResult } from '@/types/monster-types';
 import { SymbolType } from '@/types/slot-types';
-import { MONSTER_CONFIGS, HP_BAR_CONFIG, CombatCalculator } from '@/config/monster-config';
+import { MONSTER_CONFIGS, HP_BAR_CONFIG, CombatCalculator, generateMonsterHp } from '@/config/monster-config';
+import { getMonsterTexture } from '@/systems/asset-manager';
 
 /**
  * Individual monster class with HP management and visual display
@@ -10,7 +11,8 @@ export class Monster extends Container {
   private state: MonsterState;
   private config: any;
   private background!: Graphics;
-  private monsterEmoji!: Text;
+  private monsterSprite!: Sprite;
+  private monsterEmoji!: Text; // Fallback if image fails to load
   private nameText!: Text;
   private hpBar!: Graphics;
   private hpBarBackground!: Graphics;
@@ -22,11 +24,14 @@ export class Monster extends Container {
     
     this.config = MONSTER_CONFIGS[monsterType];
     
+    // Generate random HP within the monster's range
+    const randomHp = generateMonsterHp(monsterType);
+    
     // Initialize monster state
     this.state = {
       type: monsterType,
-      currentHp: this.config.maxHp,
-      maxHp: this.config.maxHp,
+      currentHp: randomHp,
+      maxHp: randomHp,
       isAlive: true,
       position: { x, y },
       isActive: false,
@@ -48,18 +53,8 @@ export class Monster extends Container {
     this.background = new Graphics();
     this.addChild(this.background);
     
-    // Create monster emoji
-    const emojiStyle = new TextStyle({
-      fontFamily: 'Arial, sans-serif',
-      fontSize: 48,
-      align: 'center',
-    });
-    
-    this.monsterEmoji = new Text(this.config.emoji, emojiStyle);
-    this.monsterEmoji.anchor.set(0.5, 0.5);
-    this.monsterEmoji.x = 0;
-    this.monsterEmoji.y = -10;
-    this.addChild(this.monsterEmoji);
+    // Try to create monster sprite from image
+    this.createMonsterVisual();
     
     // Create name text
     const nameStyle = new TextStyle({
@@ -100,6 +95,43 @@ export class Monster extends Container {
     
     this.drawBackground();
     this.drawHpBar();
+  }
+
+  /**
+   * Create monster visual (sprite if available, emoji as fallback)
+   */
+  private createMonsterVisual(): void {
+    const texture = getMonsterTexture(this.state.type);
+    
+    if (texture) {
+      // Use monster image
+      this.monsterSprite = new Sprite(texture);
+      this.monsterSprite.anchor.set(0.5, 0.5);
+      this.monsterSprite.x = 0;
+      this.monsterSprite.y = -10;
+      
+      // Scale image to fit nicely in the circle
+      const maxSize = 60; // Max width/height
+      const scale = Math.min(maxSize / texture.width, maxSize / texture.height);
+      this.monsterSprite.scale.set(scale);
+      
+      this.addChild(this.monsterSprite);
+      console.log(`Monster: Using image for ${this.config.name}`);
+    } else {
+      // Fallback to emoji
+      const emojiStyle = new TextStyle({
+        fontFamily: 'Arial, sans-serif',
+        fontSize: 48,
+        align: 'center',
+      });
+      
+      this.monsterEmoji = new Text(this.config.emoji || '👹', emojiStyle);
+      this.monsterEmoji.anchor.set(0.5, 0.5);
+      this.monsterEmoji.x = 0;
+      this.monsterEmoji.y = -10;
+      this.addChild(this.monsterEmoji);
+      console.log(`Monster: Using emoji fallback for ${this.config.name}`);
+    }
   }
   
   /**
@@ -398,11 +430,69 @@ export class Monster extends Container {
    * Reset monster to full health
    */
   reset(): void {
-    this.state.currentHp = this.state.maxHp;
+    const randomHp = generateMonsterHp(this.state.type);
+    this.state.currentHp = randomHp;
+    this.state.maxHp = randomHp;
     this.state.isAlive = true;
     this.state.isFading = false;
     this.visible = true;
     this.alpha = 1.0;
     this.updateDisplay();
+  }
+
+  /**
+   * Switch to a new monster type with fresh HP
+   */
+  switchToNewMonster(newMonsterType: MonsterType): void {
+    // Update configuration
+    this.config = MONSTER_CONFIGS[newMonsterType];
+    
+    // Generate new HP
+    const randomHp = generateMonsterHp(newMonsterType);
+    
+    // Update state
+    this.state.type = newMonsterType;
+    this.state.currentHp = randomHp;
+    this.state.maxHp = randomHp;
+    this.state.isAlive = true;
+    this.state.isFading = false;
+    this.state.isActive = false;
+    
+    // Reset visual state
+    this.visible = true;
+    this.alpha = 1.0;
+    this.scale.set(1.0);
+    
+    // Update visual components
+    this.updateMonsterVisual();
+    this.updateNameText();
+    this.updateDisplay();
+    
+    console.log(`Monster: Switched to ${this.config.name} with ${randomHp} HP`);
+  }
+
+  /**
+   * Update monster visual (when switching monsters)
+   */
+  private updateMonsterVisual(): void {
+    // Remove existing visual
+    if (this.monsterSprite) {
+      this.removeChild(this.monsterSprite);
+      this.monsterSprite.destroy();
+    }
+    if (this.monsterEmoji) {
+      this.removeChild(this.monsterEmoji);
+      this.monsterEmoji.destroy();
+    }
+    
+    // Create new visual
+    this.createMonsterVisual();
+  }
+
+  /**
+   * Update name text (when switching monsters)
+   */
+  private updateNameText(): void {
+    this.nameText.text = this.config.name;
   }
 } 

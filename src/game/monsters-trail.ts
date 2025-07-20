@@ -6,6 +6,7 @@ import { MONSTER_TRAIL_CONFIG, MonsterGenerator } from '@/config/monster-config'
 
 /**
  * Manages a trail of monsters with positioning and defeat animations
+ * Now supports simple sequential monster switching
  */
 export class MonstersTrail extends Container {
   private monsters: Monster[] = [];
@@ -14,12 +15,17 @@ export class MonstersTrail extends Container {
   private progressText!: Text;
   private totalCoinsEarned: number = 0;
   private totalExperienceEarned: number = 0;
+  
+  // Sequential monster trail configuration
+  private sequentialMonsters: MonsterType[] = MonsterGenerator.generateSequentialTrail();
+  private currentSequentialIndex: number = 0;
+  private currentMonster: Monster | null = null;
 
   constructor() {
     super();
     
     this.setupTrail();
-    this.generateNewTrail();
+    this.startSequentialMonsterTrail();
   }
 
   /**
@@ -57,71 +63,63 @@ export class MonstersTrail extends Container {
     
     this.updateProgressDisplay();
   }
-  
+
   /**
-   * Generate a new monster trail
+   * Start the sequential monster trail system
    */
-  generateNewTrail(): void {
-    // Clear existing monsters
-    this.clearTrail();
+  private startSequentialMonsterTrail(): void {
+    // Create the first monster
+    const firstMonsterType = this.sequentialMonsters[0];
+    this.currentMonster = new Monster(firstMonsterType, 0, -300);
+    this.currentMonster.setActive(true);
+    this.addChild(this.currentMonster);
     
-    // Generate monster types
-    const monsterTypes = MonsterGenerator.generateMonsterTrail(MONSTER_TRAIL_CONFIG.maxMonsters);
-    
-    // Create monster instances
-    monsterTypes.forEach((type, index) => {
-      const monster = this.createMonster(type, index);
-      this.monsters.push(monster);
-      this.addChild(monster);
-    });
-    
-    // Set first monster as active
-    this.currentMonsterIndex = 0;
-    this.updateActiveMonster();
-    
-    console.log('MonstersTrail: Generated new trail with monsters:', monsterTypes);
-  }
-  
-  /**
-   * Create a monster at the specified trail position
-   */
-  private createMonster(type: MonsterType, index: number): Monster {
-    const config = MONSTER_TRAIL_CONFIG;
-    
-    // Calculate position
-    let x: number, y: number;
-    
-    if (index === 0) {
-      // Current monster in center
-      x = config.centerPosition.x;
-      y = config.centerPosition.y;
-    } else {
-      // Trail monsters on the right side
-      x = config.trailStartX + (index - 1) * config.monsterSpacing;
-      y = config.centerPosition.y + 100;
-    }
-    
-    const monster = new Monster(type, x, y);
-    
-    // Scale down trail monsters
-    if (index > 0) {
-      monster.scale.set(0.7);
-    }
-    
-    return monster;
-  }
-  
-  /**
-   * Update which monster is currently active
-   */
-  private updateActiveMonster(): void {
-    this.monsters.forEach((monster, index) => {
-      monster.setActive(index === this.currentMonsterIndex);
-    });
-    
+    console.log(`MonstersTrail: Started with ${firstMonsterType}`);
     this.updateProgressDisplay();
   }
-  
+
+  /**
+   * Switch to the next monster in the sequence
+   */
+  private switchToNextMonster(): void {
+    this.currentSequentialIndex++;
+    
+    if (this.currentSequentialIndex >= this.sequentialMonsters.length) {
+      // Trail completed, restart
+      this.currentSequentialIndex = 0;
+      this.totalCoinsEarned = 0;
+      this.totalExperienceEarned = 0;
+      console.log('MonstersTrail: Trail completed! Restarting...');
+    }
+    
+    const nextMonsterType = this.sequentialMonsters[this.currentSequentialIndex];
+    
+    if (this.currentMonster) {
+      // Switch the existing monster to the new type
+      this.currentMonster.switchToNewMonster(nextMonsterType);
+      this.currentMonster.setActive(true);
+    } else {
+      // Create new monster if none exists
+      this.currentMonster = new Monster(nextMonsterType, 0, -300);
+      this.currentMonster.setActive(true);
+      this.addChild(this.currentMonster);
+    }
+    
+    console.log(`MonstersTrail: Switched to ${nextMonsterType} (${this.currentSequentialIndex + 1}/${this.sequentialMonsters.length})`);
+    this.updateProgressDisplay();
+  }
+
+  /**
+   * Update progress display
+   */
+  private updateProgressDisplay(): void {
+    const current = this.currentSequentialIndex + 1;
+    const total = this.sequentialMonsters.length;
+    const currentMonsterName = this.currentMonster?.getConfig().name || 'Unknown';
+    
+    this.progressText.text = `Monster ${current}/${total}: ${currentMonsterName} | Coins: ${this.totalCoinsEarned} | XP: ${this.totalExperienceEarned}`;
+  }
+
   /**
    * Attack the current monster with a weapon
    */
@@ -142,130 +140,38 @@ export class MonstersTrail extends Container {
   }
   
   /**
-   * Handle monster defeat and trail progression
+   * Handle monster defeat and switch to next monster
    */
-  private async handleMonsterDefeat(result: CombatResult): Promise<void> {
-    const defeatedMonster = this.getCurrentMonster();
-    if (!defeatedMonster) return;
+  async handleMonsterDefeat(combatResult: CombatResult): Promise<void> {
+    if (!combatResult.monsterDefeated || !this.currentMonster) return;
     
     // Add rewards
-    if (result.rewards) {
-      this.totalCoinsEarned += result.rewards.coins;
-      this.totalExperienceEarned += result.rewards.experience;
+    if (combatResult.rewards) {
+      this.totalCoinsEarned += combatResult.rewards.coins;
+      this.totalExperienceEarned += combatResult.rewards.experience;
     }
     
-    console.log(`Monster defeated! Earned ${result.rewards?.coins} coins, ${result.rewards?.experience} XP`);
+    console.log(`Monster defeated! Earned ${combatResult.rewards?.coins || 0} coins, ${combatResult.rewards?.experience || 0} XP`);
     
-    // Fade out defeated monster
-    await defeatedMonster.fadeOut();
+    // Play defeat animation
+    await this.currentMonster.fadeOut();
     
-    // Move to next monster
-    this.currentMonsterIndex++;
-    
-    if (this.currentMonsterIndex >= this.monsters.length) {
-      // Trail completed!
-      this.handleTrailCompletion();
-    } else {
-      // Move next monster to center and update trail
-      await this.moveNextMonsterToCenter();
-      this.updateActiveMonster();
-    }
-  }
-  
-  /**
-   * Move the next monster to center position
-   */
-  private async moveNextMonsterToCenter(): Promise<void> {
-    const nextMonster = this.getCurrentMonster();
-    if (!nextMonster) return;
-    
-    const config = MONSTER_TRAIL_CONFIG;
-    const targetX = config.centerPosition.x;
-    const targetY = config.centerPosition.y;
-    
-    return new Promise((resolve) => {
-      const startX = nextMonster.x;
-      const startY = nextMonster.y;
-      const startScale = nextMonster.scale.x;
-      
-      const duration = config.moveAnimationDuration;
-      const startTime = Date.now();
-      
-      const moveInterval = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        
-        // Easing function (ease-out)
-        const easeProgress = 1 - Math.pow(1 - progress, 3);
-        
-        nextMonster.x = startX + (targetX - startX) * easeProgress;
-        nextMonster.y = startY + (targetY - startY) * easeProgress;
-        nextMonster.scale.set(startScale + (1.0 - startScale) * easeProgress);
-        
-        if (progress >= 1) {
-          clearInterval(moveInterval);
-          resolve();
-        }
-      }, 16); // ~60 FPS
-    });
-  }
-  
-  /**
-   * Handle trail completion
-   */
-  private handleTrailCompletion(): void {
-    console.log(`🎉 Trail completed! Total rewards: ${this.totalCoinsEarned} coins, ${this.totalExperienceEarned} XP`);
-    
-    // Generate new trail after a delay
-    setTimeout(() => {
-      this.generateNewTrail();
-      this.totalCoinsEarned = 0;
-      this.totalExperienceEarned = 0;
-    }, 2000);
-  }
-  
-  /**
-   * Clear all monsters from the trail
-   */
-  private clearTrail(): void {
-    this.monsters.forEach(monster => {
-      this.removeChild(monster);
-      monster.destroy();
-    });
-    this.monsters = [];
-  }
-  
-  /**
-   * Update progress display
-   */
-  private updateProgressDisplay(): void {
-    const current = this.currentMonsterIndex + 1;
-    const total = this.monsters.length;
-    const currentMonster = this.getCurrentMonster();
-    
-    if (currentMonster) {
-      const monsterName = currentMonster.getConfig().name;
-      const hp = currentMonster.getState().currentHp;
-      const maxHp = currentMonster.getState().maxHp;
-      
-      this.progressText.text = `Monster ${current}/${total}: ${monsterName} (${hp}/${maxHp} HP)`;
-    } else {
-      this.progressText.text = `Trail Complete! Coins: ${this.totalCoinsEarned} | XP: ${this.totalExperienceEarned}`;
-    }
+    // Switch to next monster
+    this.switchToNextMonster();
   }
   
   /**
    * Get the currently active monster
    */
   getCurrentMonster(): Monster | null {
-    return this.monsters[this.currentMonsterIndex] || null;
+    return this.currentMonster;
   }
   
   /**
-   * Get all monsters in the trail
+   * Get all monsters in the trail (for compatibility - now returns array with current monster)
    */
   getMonsters(): Monster[] {
-    return [...this.monsters];
+    return this.currentMonster ? [this.currentMonster] : [];
   }
   
   /**
@@ -278,8 +184,8 @@ export class MonstersTrail extends Container {
     experienceEarned: number;
   } {
     return {
-      current: this.currentMonsterIndex + 1,
-      total: this.monsters.length,
+      current: this.currentSequentialIndex + 1,
+      total: this.sequentialMonsters.length,
       coinsEarned: this.totalCoinsEarned,
       experienceEarned: this.totalExperienceEarned,
     };
@@ -289,29 +195,71 @@ export class MonstersTrail extends Container {
    * Check if trail is completed
    */
   isTrailCompleted(): boolean {
-    return this.currentMonsterIndex >= this.monsters.length;
+    return this.currentSequentialIndex >= this.sequentialMonsters.length - 1 && 
+           (!this.currentMonster || !this.currentMonster.isAlive());
   }
   
   /**
    * Reset the trail to the beginning
    */
   resetTrail(): void {
-    this.monsters.forEach(monster => monster.reset());
-    this.currentMonsterIndex = 0;
+    this.currentSequentialIndex = 0;
     this.totalCoinsEarned = 0;
     this.totalExperienceEarned = 0;
-    this.updateActiveMonster();
+    
+    if (this.currentMonster) {
+      const firstMonsterType = this.sequentialMonsters[0];
+      this.currentMonster.switchToNewMonster(firstMonsterType);
+    }
+    
+    this.updateProgressDisplay();
   }
   
   /**
    * Skip to next monster (for testing)
    */
   skipToNextMonster(): void {
-    const currentMonster = this.getCurrentMonster();
-    if (currentMonster && currentMonster.isAlive()) {
-      // Defeat current monster instantly
-      const result = currentMonster.takeDamage(currentMonster.getState().currentHp as any);
-      this.handleMonsterDefeat(result);
+    if (this.currentMonster && this.currentMonster.isAlive()) {
+      // Create a mock defeat result
+      const mockResult: CombatResult = {
+        damage: this.currentMonster.getState().currentHp,
+        isCritical: false,
+        isWeakness: false,
+        isResisted: false,
+        monsterDefeated: true,
+        remainingHp: 0,
+        rewards: this.currentMonster.getConfig().rewards,
+      };
+      
+      // Force defeat the monster
+      this.currentMonster.takeDamage(this.currentMonster.getState().currentHp as any);
+      this.handleMonsterDefeat(mockResult);
+    }
+  }
+
+  // Legacy compatibility methods (no longer used but kept for existing code)
+  private async moveNextMonsterToCenter(): Promise<void> {
+    // No longer needed in sequential system
+    return Promise.resolve();
+  }
+  
+  private handleTrailCompletion(): void {
+    // Handled in switchToNextMonster now
+  }
+  
+  private clearTrail(): void {
+    // No longer needed in sequential system
+  }
+  
+  generateNewTrail(): void {
+    // Reset to first monster for compatibility
+    this.resetTrail();
+  }
+  
+  private updateActiveMonster(): void {
+    // No longer needed - single monster is always active
+    if (this.currentMonster) {
+      this.currentMonster.setActive(true);
     }
   }
 } 

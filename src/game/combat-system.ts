@@ -177,6 +177,11 @@ export class CombatSystem extends Container {
         // Show visual effects
         await this.showCombatEffects(combatResult);
         
+        // Handle monster defeat and switching
+        if (combatResult.monsterDefeated) {
+          await this.monstersTrail.handleMonsterDefeat(combatResult);
+        }
+        
         // Small delay between attacks for visual appeal
         if (weaponSymbols.length > 1) {
           await new Promise(resolve => setTimeout(resolve, 300));
@@ -195,6 +200,11 @@ export class CombatSystem extends Container {
       if (bonusResult) {
         combatResults.push(bonusResult);
         await this.showCombatEffects(bonusResult, true);
+        
+        // Handle monster defeat from bonus attack
+        if (bonusResult.monsterDefeated) {
+          await this.monstersTrail.handleMonsterDefeat(bonusResult);
+        }
       }
     }
     
@@ -312,10 +322,15 @@ export class CombatSystem extends Container {
   /**
    * Force attack current monster (for testing)
    */
-  testAttackMonster(weapon: SymbolType): CombatResult | null {
+  async testAttackMonster(weapon: SymbolType): Promise<CombatResult | null> {
     const result = this.attackWithWeapon(weapon);
     if (result) {
-      this.showCombatEffects(result);
+      await this.showCombatEffects(result);
+      
+      // Handle monster defeat if it occurred
+      if (result.monsterDefeated) {
+        await this.monstersTrail.handleMonsterDefeat(result);
+      }
     }
     return result;
   }

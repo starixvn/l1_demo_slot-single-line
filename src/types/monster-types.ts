@@ -4,6 +4,11 @@ import { SymbolType } from './slot-types';
  * Monster types with different difficulties and HP ranges
  */
 export enum MonsterType {
+  GRUMBLE_GREMLIN = 'grumble_gremlin',
+  VENOM = 'venom',
+  MUMMY = 'mummy',
+  FIERCE_HELLHOUND = 'fierce_hellhound',
+  // Legacy monsters for compatibility
   GOBLIN = 'goblin',
   ORC = 'orc',
   TROLL = 'troll',
@@ -17,8 +22,10 @@ export enum MonsterType {
 export interface MonsterConfig {
   type: MonsterType;
   name: string;
-  maxHp: number;
-  emoji: string;
+  minHp: number; // Minimum HP for random range
+  maxHp: number; // Maximum HP for random range
+  imagePath?: string; // Path to monster image
+  emoji?: string; // Fallback emoji if image not available
   color: number;
   difficulty: number; // 1-5 scale
   rewards: {

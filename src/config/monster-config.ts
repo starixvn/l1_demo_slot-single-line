@@ -5,9 +5,79 @@ import { SymbolType } from '@/types/slot-types';
  * Monster configurations with stats, weaknesses, and rewards
  */
 export const MONSTER_CONFIGS: Record<MonsterType, MonsterConfig> = {
+  [MonsterType.GRUMBLE_GREMLIN]: {
+    type: MonsterType.GRUMBLE_GREMLIN,
+    name: 'Grumble Gremlin',
+    minHp: 1,
+    maxHp: 2,
+    imagePath: 'src/assets/images/monsters/grumble-gremlin.png',
+    emoji: '👺',
+    color: 0x8B4513,
+    difficulty: 1,
+    rewards: {
+      coins: 5,
+      experience: 2,
+    },
+    weakTo: [SymbolType.IRON_SWORD, SymbolType.BRONZE_AXE],
+    resistantTo: [],
+  },
+  
+  [MonsterType.VENOM]: {
+    type: MonsterType.VENOM,
+    name: 'Venom',
+    minHp: 2,
+    maxHp: 3,
+    imagePath: 'src/assets/images/monsters/venom.png',
+    emoji: '🐍',
+    color: 0x4B0082,
+    difficulty: 2,
+    rewards: {
+      coins: 10,
+      experience: 5,
+    },
+    weakTo: [SymbolType.BRONZE_AXE, SymbolType.SILVER_SWORD],
+    resistantTo: [SymbolType.IRON_SWORD],
+  },
+  
+  [MonsterType.MUMMY]: {
+    type: MonsterType.MUMMY,
+    name: 'Mummy',
+    minHp: 3,
+    maxHp: 4,
+    imagePath: 'src/assets/images/monsters/mummy.png',
+    emoji: '🧟',
+    color: 0x8B7D6B,
+    difficulty: 3,
+    rewards: {
+      coins: 15,
+      experience: 8,
+    },
+    weakTo: [SymbolType.SILVER_SWORD, SymbolType.IRON_AXE],
+    resistantTo: [SymbolType.IRON_SWORD, SymbolType.BRONZE_AXE],
+  },
+  
+  [MonsterType.FIERCE_HELLHOUND]: {
+    type: MonsterType.FIERCE_HELLHOUND,
+    name: 'Fierce Hellhound',
+    minHp: 4,
+    maxHp: 5,
+    imagePath: 'src/assets/images/monsters/fierce-hellhound.png',
+    emoji: '🐺',
+    color: 0x8B0000,
+    difficulty: 4,
+    rewards: {
+      coins: 25,
+      experience: 12,
+    },
+    weakTo: [SymbolType.CRUSADER_BLADE, SymbolType.WAR_HAMMER],
+    resistantTo: [SymbolType.IRON_SWORD, SymbolType.BRONZE_AXE, SymbolType.SILVER_SWORD],
+  },
+
+  // Legacy monsters for compatibility
   [MonsterType.GOBLIN]: {
     type: MonsterType.GOBLIN,
     name: 'Goblin',
+    minHp: 50,
     maxHp: 50,
     emoji: '👺',
     color: 0x8B4513,
@@ -23,6 +93,7 @@ export const MONSTER_CONFIGS: Record<MonsterType, MonsterConfig> = {
   [MonsterType.ORC]: {
     type: MonsterType.ORC,
     name: 'Orc Warrior',
+    minHp: 100,
     maxHp: 100,
     emoji: '👹',
     color: 0x4B0000,
@@ -38,6 +109,7 @@ export const MONSTER_CONFIGS: Record<MonsterType, MonsterConfig> = {
   [MonsterType.TROLL]: {
     type: MonsterType.TROLL,
     name: 'Mountain Troll',
+    minHp: 200,
     maxHp: 200,
     emoji: '👾',
     color: 0x2F4F2F,
@@ -53,6 +125,7 @@ export const MONSTER_CONFIGS: Record<MonsterType, MonsterConfig> = {
   [MonsterType.DRAGON]: {
     type: MonsterType.DRAGON,
     name: 'Ancient Dragon',
+    minHp: 400,
     maxHp: 400,
     emoji: '🐉',
     color: 0x8B0000,
@@ -68,6 +141,7 @@ export const MONSTER_CONFIGS: Record<MonsterType, MonsterConfig> = {
   [MonsterType.DEMON_LORD]: {
     type: MonsterType.DEMON_LORD,
     name: 'Demon Lord',
+    minHp: 666,
     maxHp: 666,
     emoji: '😈',
     color: 0x4B0082,
@@ -223,9 +297,22 @@ export class CombatCalculator {
 }
 
 /**
- * Generate a random monster trail
+ * Generate a random monster trail with increasing difficulty
  */
 export class MonsterGenerator {
+  /**
+   * Generate a sequential monster trail for simple monster switching
+   */
+  static generateSequentialTrail(): MonsterType[] {
+    return [
+      MonsterType.GRUMBLE_GREMLIN,
+      MonsterType.VENOM,
+      MonsterType.MUMMY,
+      MonsterType.FIERCE_HELLHOUND,
+    ];
+  }
+
+  // Keep existing methods for compatibility
   private static monsterPool: MonsterType[] = [];
   
   /**
@@ -277,4 +364,25 @@ export class MonsterGenerator {
     
     return trail;
   }
-} 
+}
+
+/**
+ * Monster asset definitions
+ */
+export const MONSTER_ASSETS = {
+  [MonsterType.GRUMBLE_GREMLIN]: 'src/assets/images/monsters/grumble-gremlin.png',
+  [MonsterType.VENOM]: 'src/assets/images/monsters/venom.png',
+  [MonsterType.MUMMY]: 'src/assets/images/monsters/mummy.png',
+  [MonsterType.FIERCE_HELLHOUND]: 'src/assets/images/monsters/fierce-hellhound.png',
+} as const;
+
+/**
+ * Generate random HP for a monster within its range
+ */
+export const generateMonsterHp = (monsterType: MonsterType): number => {
+  const config = MONSTER_CONFIGS[monsterType];
+  if (config.minHp === config.maxHp) {
+    return config.maxHp;
+  }
+  return Math.floor(Math.random() * (config.maxHp - config.minHp + 1)) + config.minHp;
+}; 

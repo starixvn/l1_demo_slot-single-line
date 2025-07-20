@@ -9,6 +9,8 @@ import type {
 } from '@/types/game-types';
 import { GAME_CONSTANTS } from '@/config/game-config';
 import { SymbolType } from '@/types/slot-types';
+import { MonsterType } from '@/types/monster-types';
+import { MONSTER_ASSETS } from '@/config/monster-config';
 
 /**
  * High-performance asset manager for PIXI.js with error handling and caching
@@ -315,4 +317,50 @@ export const getSymbolTexture = (symbolType: SymbolType): Texture | null => {
  */
 export const areSymbolTexturesLoaded = (): boolean => {
   return symbolTextures.size === Object.keys(SYMBOL_ASSETS).length;
+};
+
+/**
+ * Monster asset loading
+ */
+
+/**
+ * Loaded monster textures
+ */
+const monsterTextures: Map<MonsterType, Texture> = new Map();
+
+/**
+ * Load all monster assets
+ */
+export const loadMonsterAssets = async (): Promise<void> => {
+  try {
+    console.log('Loading monster assets...');
+    
+    // Load all monster textures
+    const monsterPromises = Object.entries(MONSTER_ASSETS).map(async ([monsterType, path]) => {
+      const texture = await Assets.load(path);
+      monsterTextures.set(monsterType as MonsterType, texture);
+      console.log(`Loaded monster: ${monsterType}`);
+    });
+    
+    await Promise.all(monsterPromises);
+    console.log('All monster assets loaded successfully');
+    
+  } catch (error) {
+    console.error('Error loading monster assets:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get texture for a monster
+ */
+export const getMonsterTexture = (monsterType: MonsterType): Texture | null => {
+  return monsterTextures.get(monsterType) || null;
+};
+
+/**
+ * Check if monster textures are loaded
+ */
+export const areMonsterTexturesLoaded = (): boolean => {
+  return monsterTextures.size === Object.keys(MONSTER_ASSETS).length;
 }; 
