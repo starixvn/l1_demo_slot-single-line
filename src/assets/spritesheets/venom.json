@@ -1,0 +1,255 @@
+{
+	"frames": {
+		"Wraith_03_Attack_000.png": {
+			"frame": {
+				"x": 1,
+				"y": 1,
+				"w": 520,
+				"h": 420
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 520,
+				"h": 420
+			},
+			"sourceSize": {
+				"w": 520,
+				"h": 420
+			}
+		},
+		"Wraith_03_Attack_001.png": {
+			"frame": {
+				"x": 523,
+				"y": 1,
+				"w": 520,
+				"h": 420
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 520,
+				"h": 420
+			},
+			"sourceSize": {
+				"w": 520,
+				"h": 420
+			}
+		},
+		"Wraith_03_Attack_002.png": {
+			"frame": {
+				"x": 1045,
+				"y": 1,
+				"w": 520,
+				"h": 420
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 520,
+				"h": 420
+			},
+			"sourceSize": {
+				"w": 520,
+				"h": 420
+			}
+		},
+		"Wraith_03_Attack_003.png": {
+			"frame": {
+				"x": 1,
+				"y": 423,
+				"w": 520,
+				"h": 420
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 520,
+				"h": 420
+			},
+			"sourceSize": {
+				"w": 520,
+				"h": 420
+			}
+		},
+		"Wraith_03_Attack_004.png": {
+			"frame": {
+				"x": 523,
+				"y": 423,
+				"w": 520,
+				"h": 420
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 520,
+				"h": 420
+			},
+			"sourceSize": {
+				"w": 520,
+				"h": 420
+			}
+		},
+		"Wraith_03_Attack_005.png": {
+			"frame": {
+				"x": 1045,
+				"y": 423,
+				"w": 520,
+				"h": 420
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 520,
+				"h": 420
+			},
+			"sourceSize": {
+				"w": 520,
+				"h": 420
+			}
+		},
+		"Wraith_03_Attack_006.png": {
+			"frame": {
+				"x": 1,
+				"y": 845,
+				"w": 520,
+				"h": 420
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 520,
+				"h": 420
+			},
+			"sourceSize": {
+				"w": 520,
+				"h": 420
+			}
+		},
+		"Wraith_03_Attack_007.png": {
+			"frame": {
+				"x": 523,
+				"y": 845,
+				"w": 520,
+				"h": 420
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 520,
+				"h": 420
+			},
+			"sourceSize": {
+				"w": 520,
+				"h": 420
+			}
+		},
+		"Wraith_03_Attack_008.png": {
+			"frame": {
+				"x": 1045,
+				"y": 845,
+				"w": 520,
+				"h": 420
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 520,
+				"h": 420
+			},
+			"sourceSize": {
+				"w": 520,
+				"h": 420
+			}
+		},
+		"Wraith_03_Attack_009.png": {
+			"frame": {
+				"x": 1567,
+				"y": 1,
+				"w": 520,
+				"h": 420
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 520,
+				"h": 420
+			},
+			"sourceSize": {
+				"w": 520,
+				"h": 420
+			}
+		},
+		"Wraith_03_Attack_010.png": {
+			"frame": {
+				"x": 1567,
+				"y": 423,
+				"w": 520,
+				"h": 420
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 520,
+				"h": 420
+			},
+			"sourceSize": {
+				"w": 520,
+				"h": 420
+			}
+		},
+		"Wraith_03_Attack_011.png": {
+			"frame": {
+				"x": 1567,
+				"y": 845,
+				"w": 520,
+				"h": 420
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 520,
+				"h": 420
+			},
+			"sourceSize": {
+				"w": 520,
+				"h": 420
+			}
+		}
+	},
+	"meta": {
+		"app": "http://www.codeandweb.com/texturepacker",
+		"version": "1.0",
+		"image": "venom.png",
+		"format": "RGBA8888",
+		"size": {
+			"w": 2088,
+			"h": 1266
+		},
+		"scale": "1"
+	}
+}

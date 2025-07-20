@@ -13,10 +13,10 @@ export class Monster extends Container {
   private background!: Graphics;
   private monsterSprite!: Sprite | AnimatedSprite;
   private monsterEmoji!: Text; // Fallback if image fails to load
+  private monsterInfo!: Container; // Container for name + HP bar
   private nameText!: Text;
   private hpBar!: Graphics;
   private hpBarBackground!: Graphics;
-  private hpText!: Text;
   private isAnimating: boolean = false;
   private baseScale: number = 1.0; // Store the intended scale from external sources
   private isAnimatedSprite: boolean = false; // Track if using animated sprite
@@ -58,42 +58,38 @@ export class Monster extends Container {
     // Try to create monster sprite from image
     this.createMonsterVisual();
     
+    // Create monster info container (name + HP bar)
+    this.monsterInfo = new Container();
+    this.addChild(this.monsterInfo);
+    
     // Create name text
     const nameStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 14,
+      fontSize: 16, // Slightly larger for better readability
       fontWeight: 'bold',
       fill: 0xFFFFFF,
       align: 'center',
+      dropShadow: true,
+      dropShadowColor: 0x000000,
+      dropShadowBlur: 2,
+      dropShadowDistance: 1,
     });
     
     this.nameText = new Text(this.config.name, nameStyle);
     this.nameText.anchor.set(0.5, 0);
     this.nameText.x = 0;
-    this.nameText.y = 60; // Adjusted for smaller circle (radius 50)
-    this.addChild(this.nameText);
+    this.nameText.y = 0; // Position at top of info container
+    this.monsterInfo.addChild(this.nameText);
     
     // Create HP bar background
     this.hpBarBackground = new Graphics();
-    this.addChild(this.hpBarBackground);
+    this.monsterInfo.addChild(this.hpBarBackground);
     
     // Create HP bar
     this.hpBar = new Graphics();
-    this.addChild(this.hpBar);
+    this.monsterInfo.addChild(this.hpBar);
     
-    // Create HP text
-    const hpStyle = new TextStyle({
-      fontFamily: 'Arial, sans-serif',
-      fontSize: 12,
-      fill: 0xFFFFFF,
-      align: 'center',
-    });
-    
-    this.hpText = new Text('', hpStyle);
-    this.hpText.anchor.set(0.5, 0.5);
-    this.hpText.x = 0;
-    this.hpText.y = 90; // Adjusted for smaller circle layout
-    this.addChild(this.hpText);
+    // HP text removed - cleaner UI without text numbers
     
     this.drawBackground();
     this.drawHpBar();
@@ -139,10 +135,10 @@ export class Monster extends Container {
     // Common sprite setup
     this.monsterSprite.anchor.set(0.5, 0.5);
     this.monsterSprite.x = 0;
-    this.monsterSprite.y = -10;
+    this.monsterSprite.y = 0; // Center the monster at origin
     
-    // Enhanced scaling for better image quality
-    const maxSize = 90; // Balanced size relative to weapon slot symbols
+    // Enhanced scaling for better image quality - increased size for spritesheets
+    const maxSize = 140; // Increased from 90 to make monsters more prominent
     const scale = Math.min(maxSize / this.monsterSprite.width, maxSize / this.monsterSprite.height);
     this.monsterSprite.scale.set(scale);
     
@@ -154,6 +150,9 @@ export class Monster extends Container {
     // Log spritesheet usage
     const source = isFromSpritesheet ? (this.isAnimatedSprite ? 'animated spritesheet' : 'spritesheet') : 'individual image';
     console.log(`Monster: Using enhanced ${source} for ${this.config.name}`);
+    
+    // Position monster info container below the sprite
+    this.positionMonsterInfo();
   }
 
   /**
@@ -174,9 +173,12 @@ export class Monster extends Container {
     this.monsterEmoji = new Text(this.config.emoji || '👹', emojiStyle);
     this.monsterEmoji.anchor.set(0.5, 0.5);
     this.monsterEmoji.x = 0;
-    this.monsterEmoji.y = -10;
+    this.monsterEmoji.y = 0; // Match monster sprite positioning
     this.addChild(this.monsterEmoji);
     console.log(`Monster: Using enhanced emoji fallback for ${this.config.name}`);
+    
+    // Position monster info container below the emoji
+    this.positionMonsterInfo();
   }
 
   /**
@@ -199,7 +201,7 @@ export class Monster extends Container {
     
     shadowSprite.anchor.set(0.5, 0.5);
     shadowSprite.x = 2;
-    shadowSprite.y = -8; // Slightly offset
+    shadowSprite.y = 2; // Slightly offset from centered monster
     shadowSprite.alpha = 0.3;
     shadowSprite.tint = 0x000000; // Black shadow
     shadowSprite.scale.copyFrom(this.monsterSprite.scale);
@@ -209,67 +211,19 @@ export class Monster extends Container {
   }
   
   /**
-   * Draw the monster background with enhanced visual effects
+   * Draw minimal background (no circle - spritesheets look better without it)
    */
   private drawBackground(): void {
     this.background.clear();
     
-    const radius = 50; // Reduced for smaller 2x monster scale
-    const alpha = this.state.isActive ? 1.0 : 0.6;
-    
-    // Create gradient effect by drawing multiple circles
-    const baseColor = this.config.color;
-    const darkerColor = this.adjustColor(baseColor, -0.3); // Darker variant
-    const lighterColor = this.adjustColor(baseColor, 0.2); // Lighter variant
-    
-    // Draw outer glow/shadow
-    this.background.beginFill(darkerColor, alpha * 0.3);
-    this.background.drawCircle(0, 2, radius + 4); // Slightly offset and larger
-    this.background.endFill();
-    
-    // Draw main background with gradient effect
-    this.background.beginFill(baseColor, alpha);
-    this.background.drawCircle(0, 0, radius);
-    this.background.endFill();
-    
-    // Draw inner highlight
-    this.background.beginFill(lighterColor, alpha * 0.4);
-    this.background.drawCircle(-5, -8, radius * 0.6); // Offset for light source effect
-    this.background.endFill();
-    
-    // Draw border with enhanced styling
-    const borderColor = this.state.isActive ? 0xFFD700 : 0xFFFFFF;
-    const borderWidth = this.state.isActive ? 3 : 2;
-    
-    this.background.lineStyle(borderWidth, borderColor, 1);
-    this.background.drawCircle(0, 0, radius);
-    
-    // Add inner border for depth
-    if (this.state.isActive) {
-      this.background.lineStyle(1, lighterColor, 0.6);
-      this.background.drawCircle(0, 0, radius - 3);
-    }
-    
-    // Add pulsing effect if active
+    // No circle background needed - spritesheets look better standalone
+    // Just add pulsing effect if active
     if (this.state.isActive && !this.isAnimating) {
       this.startPulseAnimation();
     }
   }
 
-  /**
-   * Utility function to adjust color brightness
-   */
-  private adjustColor(color: number, factor: number): number {
-    const r = (color >> 16) & 255;
-    const g = (color >> 8) & 255;
-    const b = color & 255;
-    
-    const newR = Math.max(0, Math.min(255, r + (r * factor)));
-    const newG = Math.max(0, Math.min(255, g + (g * factor)));
-    const newB = Math.max(0, Math.min(255, b + (b * factor)));
-    
-    return (newR << 16) | (newG << 8) | newB;
-  }
+
   
   /**
    * Draw the HP bar
@@ -283,11 +237,14 @@ export class Monster extends Container {
     this.hpBarBackground.clear();
     this.hpBar.clear();
     
+    // Position HP bar relative to name text within the monster info container
+    const hpBarY = 22; // Small gap below the name text (name height ~16px + 6px gap)
+    
     // Draw HP bar background
     this.hpBarBackground.beginFill(config.backgroundColor);
     this.hpBarBackground.drawRoundedRect(
       -config.width / 2, 
-      75, // Adjusted for smaller circle - between name text (60) and HP text (90)
+      hpBarY,
       config.width, 
       config.height, 
       2
@@ -298,7 +255,7 @@ export class Monster extends Container {
     this.hpBarBackground.lineStyle(1, config.borderColor, 1);
     this.hpBarBackground.drawRoundedRect(
       -config.width / 2, 
-      75, // Adjusted to match background position
+      hpBarY,
       config.width, 
       config.height, 
       2
@@ -313,7 +270,7 @@ export class Monster extends Container {
       this.hpBar.beginFill(healthColor);
       this.hpBar.drawRoundedRect(
         -config.width / 2, 
-        75, // Adjusted to match background position
+        hpBarY,
         barWidth, 
         config.height, 
         2
@@ -321,8 +278,7 @@ export class Monster extends Container {
       this.hpBar.endFill();
     }
     
-    // Update HP text
-    this.hpText.text = `${this.state.currentHp}/${this.state.maxHp}`;
+    // HP text removed for cleaner UI
   }
   
   /**
@@ -331,6 +287,7 @@ export class Monster extends Container {
   private updateDisplay(): void {
     this.drawBackground();
     this.drawHpBar();
+    this.positionMonsterInfo(); // Position info container below monster sprite
     
     // Update opacity based on state
     if (this.state.isFading) {
@@ -340,6 +297,30 @@ export class Monster extends Container {
     } else {
       this.alpha = 1.0;
     }
+  }
+
+  /**
+   * Position the monster info container below the monster sprite
+   */
+  private positionMonsterInfo(): void {
+    if (!this.monsterInfo) return;
+    
+    let monsterBottomY = 0; // Default for emoji fallback
+    
+    // Calculate bottom position based on monster visual type
+    if (this.monsterSprite) {
+      // Get the bottom edge of the monster sprite
+      const spriteBounds = this.monsterSprite.getBounds();
+      monsterBottomY = spriteBounds.height / 2; // Half height since sprite is centered
+    } else if (this.monsterEmoji) {
+      // Get the bottom edge of the emoji text
+      const emojiBounds = this.monsterEmoji.getBounds();
+      monsterBottomY = emojiBounds.height / 2; // Half height since emoji is centered
+    }
+    
+    // Position monster info container with small padding below monster
+    this.monsterInfo.x = 0; // Center horizontally
+    this.monsterInfo.y = monsterBottomY + 5; // 5px padding below monster
   }
   
   /**
@@ -572,14 +553,9 @@ export class Monster extends Container {
       
       // Apply smooth easing using sine function
       const easeInOut = 0.5 * (1 + Math.sin((pulseProgress - 0.5) * Math.PI));
-      const scaleFactor = 1 + (easeInOut * 0.15); // Subtle 15% scale variation
+      const scaleFactor = 1 + (easeInOut * 0.1); // Subtle 10% scale variation for cleaner look
       
       this.scale.set(this.baseScale * scaleFactor);
-      
-      // Add subtle glow effect by adjusting alpha of background
-      if (this.background) {
-        this.background.alpha = 0.8 + (easeInOut * 0.2); // Pulse transparency
-      }
       
     }, 50); // Smooth 20 FPS animation
   }

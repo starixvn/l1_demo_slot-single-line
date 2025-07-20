@@ -68,23 +68,23 @@ export class MonstersTrail extends Container {
     this.progressText.x = centerX;
     this.progressText.y = topY + 50;
     
-    // Calculate monster positions
-    const monsterAreaCenterY = topY + areaHeight * 0.6; // Position monsters in lower 60% of area
+    // Calculate monster positions - adjusted for larger sprites
+    const monsterAreaCenterY = topY + areaHeight * 0.55; // Slightly higher for larger monsters
     const currentMonsterX = centerX; // Center for current monster
-    const nextMonsterX = centerX - areaWidth * 0.35; // Left side for next monster (increased spacing for larger sprites)
+    const nextMonsterX = centerX - areaWidth * 0.4; // Increased spacing for larger sprites
     
     // Position current monster (large, center)
     if (this.currentMonster) {
       this.currentMonster.x = currentMonsterX;
       this.currentMonster.y = monsterAreaCenterY;
-      this.currentMonster.setBaseScale(2.0); // Reduced scale to save space
+      this.currentMonster.setBaseScale(2.2); // Slightly increased scale for prominence
     }
     
     // Position next monster (smaller, left side)
     if (this.nextMonster) {
       this.nextMonster.x = nextMonsterX;
       this.nextMonster.y = monsterAreaCenterY;
-      this.nextMonster.setBaseScale(1.2); // Proportionally reduced scale
+      this.nextMonster.setBaseScale(1.4); // Proportionally increased scale
       this.nextMonster.alpha = 0.7; // Slightly transparent to indicate it's upcoming
     }
   }
@@ -129,7 +129,7 @@ export class MonstersTrail extends Container {
     const currentMonsterType = this.sequentialMonsters[this.currentSequentialIndex];
     this.currentMonster = new Monster(currentMonsterType, 0, 0);
     this.currentMonster.setActive(true);
-    this.currentMonster.setBaseScale(2.0); // Set initial scale (reduced)
+    this.currentMonster.setBaseScale(2.2); // Set initial scale for prominence
     this.addChild(this.currentMonster);
     
     // Create the next monster (preview)
@@ -137,7 +137,7 @@ export class MonstersTrail extends Container {
     const nextMonsterType = this.sequentialMonsters[nextIndex];
     this.nextMonster = new Monster(nextMonsterType, 0, 0);
     this.nextMonster.setActive(false);
-    this.nextMonster.setBaseScale(1.2); // Set initial scale (proportionally reduced)
+    this.nextMonster.setBaseScale(1.4); // Set initial scale proportionally
     this.addChild(this.nextMonster);
     
     // Position elements
@@ -171,7 +171,7 @@ export class MonstersTrail extends Container {
     if (this.nextMonster) {
       this.currentMonster = this.nextMonster;
       this.currentMonster.setActive(true);
-      this.currentMonster.setBaseScale(2.0); // Match the reduced scale for current monster
+      this.currentMonster.setBaseScale(2.2); // Match the scale for current monster prominence
       this.currentMonster.alpha = 1.0;
     }
     
@@ -180,7 +180,7 @@ export class MonstersTrail extends Container {
     const nextMonsterType = this.sequentialMonsters[nextIndex];
     this.nextMonster = new Monster(nextMonsterType, 0, 0);
     this.nextMonster.setActive(false);
-    this.nextMonster.setBaseScale(1.2); // Set proportionally reduced base scale for new next monster
+    this.nextMonster.setBaseScale(1.4); // Set proportional base scale for new next monster
     this.addChild(this.nextMonster);
     
     // Reposition all elements

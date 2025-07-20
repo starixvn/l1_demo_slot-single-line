@@ -399,6 +399,46 @@ export const MONSTER_SPRITESHEETS = {
       'Wraith_01_Attack_010.png',
       'Wraith_01_Attack_011.png',
     ]
+  },
+  [MonsterType.VENOM]: {
+    name: 'venom_spritesheet',
+    url: 'src/assets/spritesheets/venom.json',
+    type: 'spritesheet' as const,
+    defaultFrame: 'Wraith_03_Attack_000.png', // Use first frame as default
+    animationFrames: [
+      'Wraith_03_Attack_000.png',
+      'Wraith_03_Attack_001.png',
+      'Wraith_03_Attack_002.png',
+      'Wraith_03_Attack_003.png',
+      'Wraith_03_Attack_004.png',
+      'Wraith_03_Attack_005.png',
+      'Wraith_03_Attack_006.png',
+      'Wraith_03_Attack_007.png',
+      'Wraith_03_Attack_008.png',
+      'Wraith_03_Attack_009.png',
+      'Wraith_03_Attack_010.png',
+      'Wraith_03_Attack_011.png',
+    ]
+  },
+  [MonsterType.MUMMY]: {
+    name: 'mummy_spritesheet',
+    url: 'src/assets/spritesheets/mummy.json',
+    type: 'spritesheet' as const,
+    defaultFrame: 'Wraith_02_Attack_000.png', // Use first frame as default
+    animationFrames: [
+      'Wraith_02_Attack_000.png',
+      'Wraith_02_Attack_001.png',
+      'Wraith_02_Attack_002.png',
+      'Wraith_02_Attack_003.png',
+      'Wraith_02_Attack_004.png',
+      'Wraith_02_Attack_005.png',
+      'Wraith_02_Attack_006.png',
+      'Wraith_02_Attack_007.png',
+      'Wraith_02_Attack_008.png',
+      'Wraith_02_Attack_009.png',
+      'Wraith_02_Attack_010.png',
+      'Wraith_02_Attack_011.png',
+    ]
   }
 } as const;
 
