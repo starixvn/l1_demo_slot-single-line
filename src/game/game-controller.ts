@@ -116,17 +116,17 @@ export class GameController extends Container {
       this.settingsPanel.setPopupCenter(centerX, 0); // Center popup on screen
     }
     
-    // 3. Position Control Buttons (below weapon slot)
+    // 3. Position Control Buttons (below weapon slot) - centered horizontally
     if (this.buttonContainer) {
       const buttonsY = weaponAreaBottom + this.UI_PADDING + 30;
-      this.buttonContainer.x = centerX;
+      this.buttonContainer.x = centerX; // Perfect horizontal centering
       this.buttonContainer.y = buttonsY;
       
-      // 4. Position Player Info Panel (below buttons)
+      // 4. Position Player Info Panel (below buttons) - centered horizontally
       if (this.playerInfoDisplay) {
         const infoSize = this.playerInfoDisplay.getDisplaySize();
         this.playerInfoDisplay.setDisplayPosition(
-          centerX - infoSize.width / 2,
+          centerX - infoSize.width / 2, // Perfect horizontal centering
           buttonsY + 60 // Below buttons with spacing
         );
       }
@@ -236,14 +236,14 @@ export class GameController extends Container {
   }
   
   /**
-   * Create interactive buttons with new horizontal layout
+   * Create interactive buttons with perfectly centered horizontal layout
    */
   private createButtons(): void {
     console.log('GameController: Creating buttons...');
     
-    const buttonSpacing = 180; // Equal spacing between buttons
+    const buttonSpacing = 180; // Equal spacing between buttons for perfect symmetry
     
-    // Spin button (left)
+    // Spin button (left) - positioned at -buttonSpacing for perfect centering
     this.spinButton = this.createButton('🎰 SPIN 🎰', 0x2ECC71, -buttonSpacing, 0);
     this.spinButton.eventMode = 'static';
     this.spinButton.cursor = 'pointer';
@@ -255,7 +255,7 @@ export class GameController extends Container {
     
     console.log('GameController: Spin button created and added to container');
     
-    // Reset button (center)
+    // Reset button (center) - positioned at 0 for perfect center
     this.resetButton = this.createButton('Reset', 0xE74C3C, 0, 0);
     this.resetButton.eventMode = 'static';
     this.resetButton.cursor = 'pointer';
@@ -265,7 +265,7 @@ export class GameController extends Container {
     });
     this.buttonContainer.addChild(this.resetButton);
     
-    // Test win button (right)
+    // Test win button (right) - positioned at +buttonSpacing for perfect centering
     this.testButton = this.createButton('Test Win', 0xF39C12, buttonSpacing, 0);
     this.testButton.eventMode = 'static';
     this.testButton.cursor = 'pointer';

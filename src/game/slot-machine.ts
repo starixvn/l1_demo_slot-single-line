@@ -73,13 +73,15 @@ export class SlotMachine extends Container {
     const startX = centerX - totalReelWidth / 2;
     
     this.reels.forEach((reel, index) => {
+      // Ensure perfect centering: start position + spacing for each reel + half reel width for anchor
       reel.x = startX + (index * (SLOT_CONFIG.REEL_WIDTH + SLOT_CONFIG.REEL_SPACING)) + SLOT_CONFIG.REEL_WIDTH / 2;
       reel.y = reelAreaY;
     });
     
-    // Position text elements below reels
+    // Position text elements below reels - all centered horizontally
     const textAreaY = reelAreaY + reelAreaHeight + 20;
     
+    // All text elements centered on centerX for perfect horizontal alignment
     this.resultText.x = centerX;
     this.resultText.y = textAreaY;
     
@@ -144,13 +146,9 @@ export class SlotMachine extends Container {
    * Create the three reels
    */
   private createReels(): void {
-    const totalWidth = (SLOT_CONFIG.REEL_WIDTH * SLOT_CONFIG.REEL_COUNT) + 
-                      (SLOT_CONFIG.REEL_SPACING * (SLOT_CONFIG.REEL_COUNT - 1));
-    const startX = -totalWidth / 2;
-    
+    // Create reels with temporary positions - repositionElements() will set final positions
     for (let i = 0; i < SLOT_CONFIG.REEL_COUNT; i++) {
-      const x = startX + (i * (SLOT_CONFIG.REEL_WIDTH + SLOT_CONFIG.REEL_SPACING));
-      const reel = new Reel(i, x, 0);
+      const reel = new Reel(i, 0, 0); // Temporary position
       
       this.reels.push(reel);
       this.addChild(reel);
