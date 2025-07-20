@@ -20,7 +20,6 @@ interface AreaLayoutConfig {
 export class SlotMachine extends Container {
   private reels: Reel[] = [];
   private isSpinning: boolean = false;
-  private titleText!: Text;
   private resultText!: Text;
   private balanceText!: Text;
   private respinText!: Text;
@@ -65,13 +64,9 @@ export class SlotMachine extends Container {
   private repositionElements(): void {
     const { areaHeight, centerX, topY } = this.areaConfig;
     
-    // Position title at the top of the weapon area
-    this.titleText.x = centerX;
-    this.titleText.y = topY + 20;
-    
-    // Calculate reel area (centered in the weapon area)
+    // Calculate reel area (use more space since title is removed)
     const reelAreaHeight = Math.min(areaHeight * 0.6, SLOT_CONFIG.REEL_HEIGHT);
-    const reelAreaY = topY + areaHeight * 0.3; // Center reels vertically in area
+    const reelAreaY = topY + areaHeight * 0.15; // Move reels higher since no title
     
     // Position reels horizontally centered
     const totalReelWidth = (SLOT_CONFIG.REEL_WIDTH * 3) + (SLOT_CONFIG.REEL_SPACING * 2);
@@ -99,18 +94,7 @@ export class SlotMachine extends Container {
    * Set up the slot machine layout and components
    */
   private setupSlotMachine(): void {
-    // Create title
-    const titleStyle = new TextStyle({
-      fontFamily: 'Arial, sans-serif',
-      fontSize: 28, // Slightly smaller for responsive design
-      fontWeight: 'bold',
-      fill: 0xFFFFFF,
-      align: 'center',
-    });
-    
-    this.titleText = new Text('🎰 WEAPON SLOT MACHINE 🎰', titleStyle);
-    this.titleText.anchor.set(0.5, 0);
-    this.addChild(this.titleText);
+    // Title removed to save space for monster trails
     
     // Create reels
     this.createReels();

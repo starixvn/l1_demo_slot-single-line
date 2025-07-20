@@ -18,6 +18,7 @@ export class Monster extends Container {
   private hpBarBackground!: Graphics;
   private hpText!: Text;
   private isAnimating: boolean = false;
+  private baseScale: number = 1.0; // Store the intended scale from external sources
 
   constructor(monsterType: MonsterType, x: number = 0, y: number = 0) {
     super();
@@ -68,7 +69,7 @@ export class Monster extends Container {
     this.nameText = new Text(this.config.name, nameStyle);
     this.nameText.anchor.set(0.5, 0);
     this.nameText.x = 0;
-    this.nameText.y = 25;
+    this.nameText.y = 60; // Adjusted for smaller circle (radius 50)
     this.addChild(this.nameText);
     
     // Create HP bar background
@@ -90,7 +91,7 @@ export class Monster extends Container {
     this.hpText = new Text('', hpStyle);
     this.hpText.anchor.set(0.5, 0.5);
     this.hpText.x = 0;
-    this.hpText.y = 55;
+    this.hpText.y = 90; // Adjusted for smaller circle layout
     this.addChild(this.hpText);
     
     this.drawBackground();
@@ -110,8 +111,8 @@ export class Monster extends Container {
       this.monsterSprite.x = 0;
       this.monsterSprite.y = -10;
       
-      // Scale image to fit nicely in the circle
-      const maxSize = 60; // Max width/height
+      // Scale image to maintain high quality for large displays
+      const maxSize = 90; // Balanced size relative to weapon slot symbols
       const scale = Math.min(maxSize / texture.width, maxSize / texture.height);
       this.monsterSprite.scale.set(scale);
       
@@ -140,7 +141,7 @@ export class Monster extends Container {
   private drawBackground(): void {
     this.background.clear();
     
-    const radius = 40;
+    const radius = 50; // Reduced for smaller 2x monster scale
     const alpha = this.state.isActive ? 1.0 : 0.6;
     
     // Draw background circle with monster color
@@ -177,7 +178,7 @@ export class Monster extends Container {
     this.hpBarBackground.beginFill(config.backgroundColor);
     this.hpBarBackground.drawRoundedRect(
       -config.width / 2, 
-      40, 
+      75, // Adjusted for smaller circle - between name text (60) and HP text (90)
       config.width, 
       config.height, 
       2
@@ -188,7 +189,7 @@ export class Monster extends Container {
     this.hpBarBackground.lineStyle(1, config.borderColor, 1);
     this.hpBarBackground.drawRoundedRect(
       -config.width / 2, 
-      40, 
+      75, // Adjusted to match background position
       config.width, 
       config.height, 
       2
@@ -203,7 +204,7 @@ export class Monster extends Container {
       this.hpBar.beginFill(healthColor);
       this.hpBar.drawRoundedRect(
         -config.width / 2, 
-        40, 
+        75, // Adjusted to match background position
         barWidth, 
         config.height, 
         2
@@ -379,6 +380,14 @@ export class Monster extends Container {
   }
   
   /**
+   * Set the base scale (called from external positioning systems)
+   */
+  public setBaseScale(scale: number): void {
+    this.baseScale = scale;
+    this.scale.set(scale);
+  }
+
+  /**
    * Start pulsing animation for active monster
    */
   private startPulseAnimation(): void {
@@ -390,10 +399,10 @@ export class Monster extends Container {
         return;
       }
       
-      // Subtle scale pulse
-      this.scale.set(1.1);
+      // Subtle scale pulse using base scale
+      this.scale.set(this.baseScale * 1.1);
       setTimeout(() => {
-        this.scale.set(1.0);
+        this.scale.set(this.baseScale);
       }, 200);
     }, 1000);
   }
@@ -461,7 +470,7 @@ export class Monster extends Container {
     // Reset visual state
     this.visible = true;
     this.alpha = 1.0;
-    this.scale.set(1.0);
+    this.scale.set(this.baseScale); // Restore the intended scale instead of hardcoded 1.0
     
     // Update visual components
     this.updateMonsterVisual();
