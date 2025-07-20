@@ -2,6 +2,9 @@
  * Symbol types in the slot game
  */
 export enum SymbolType {
+  // Non-weapon symbols
+  BROKEN = 'broken',                    // 0 HP damage - most common symbol
+  
   // Weapon symbols (ordered by damage - low to high)
   IRON_SWORD = 'iron_sword',        // 1 HP damage
   BRONZE_AXE = 'bronze_axe',        // 2 HP damage

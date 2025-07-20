@@ -88,6 +88,7 @@ export const CRITICAL_HIT_CONFIG: CriticalHitConfig = {
   baseChance: 10, // 10% base critical hit chance
   multiplier: 2.0, // 2x damage on critical hits
   weaponModifiers: {
+    [SymbolType.BROKEN]: -10, // -10% crit chance (never crits)
     [SymbolType.IRON_SWORD]: 0, // No modifier
     [SymbolType.BRONZE_AXE]: 2, // +2% crit chance
     [SymbolType.SILVER_SWORD]: 5, // +5% crit chance
@@ -129,6 +130,7 @@ export const HP_BAR_CONFIG: HpBarConfig = {
  * Note: MAGIC_STAFF has variable damage (6-9), so we use average for base calculations
  */
 export const WEAPON_DAMAGE: Record<SymbolType, number> = {
+  [SymbolType.BROKEN]: 0, // Broken weapon does no damage
   [SymbolType.IRON_SWORD]: 1,
   [SymbolType.BRONZE_AXE]: 2,
   [SymbolType.SILVER_SWORD]: 3,

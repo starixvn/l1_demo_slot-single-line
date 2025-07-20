@@ -6,11 +6,21 @@ import { SymbolType, SymbolConfig } from '@/types/slot-types';
  * Higher damage weapons have lower probability (rarer)
  */
 export const SYMBOL_CONFIGS: Record<SymbolType, SymbolConfig> = {
+  [SymbolType.BROKEN]: {
+    type: SymbolType.BROKEN,
+    name: 'Broken',
+    value: 0, // 0 HP damage - no effect
+    probability: 190, // >50% chance (~60% of total weight)
+    color: 0x696969, // Dark gray for broken items
+    textColor: 0xFFFFFF,
+    emoji: '💔',
+  },
+  
   [SymbolType.IRON_SWORD]: {
     type: SymbolType.IRON_SWORD,
     name: 'Iron Sword',
     value: 1, // 1 HP damage
-    probability: 40, // Most common weapon (40% of total weight)
+    probability: 40, // Most common weapon (40% of remaining weight)
     color: 0x8C7853, // Brown-ish iron
     textColor: 0xFFFFFF,
     emoji: '⚔️',
@@ -20,7 +30,7 @@ export const SYMBOL_CONFIGS: Record<SymbolType, SymbolConfig> = {
     type: SymbolType.BRONZE_AXE,
     name: 'Bronze Axe',
     value: 2, // 2 HP damage
-    probability: 30, // Common (30% of total weight)
+    probability: 30, // Common (30% of remaining weight)
     color: 0xCD7F32, // Bronze color
     textColor: 0xFFFFFF,
     emoji: '🪓',
@@ -30,7 +40,7 @@ export const SYMBOL_CONFIGS: Record<SymbolType, SymbolConfig> = {
     type: SymbolType.SILVER_SWORD,
     name: 'Silver Sword',
     value: 3, // 3 HP damage
-    probability: 20, // Uncommon (20% of total weight)
+    probability: 20, // Uncommon (20% of remaining weight)
     color: 0xC0C0C0, // Silver
     textColor: 0x000000,
     emoji: '⚔️',
@@ -40,7 +50,7 @@ export const SYMBOL_CONFIGS: Record<SymbolType, SymbolConfig> = {
     type: SymbolType.IRON_AXE,
     name: 'Iron Axe',
     value: 4, // 4 HP damage
-    probability: 15, // Rare (15% of total weight)
+    probability: 15, // Rare (15% of remaining weight)
     color: 0x5A5A5A, // Dark iron/steel
     textColor: 0xFFFFFF,
     emoji: '🪓',
@@ -50,7 +60,7 @@ export const SYMBOL_CONFIGS: Record<SymbolType, SymbolConfig> = {
     type: SymbolType.CRUSADER_BLADE,
     name: 'Crusader Blade',
     value: 5, // 5 HP damage
-    probability: 10, // Very rare (10% of total weight)
+    probability: 10, // Very rare (10% of remaining weight)
     color: 0x9B59B6, // Purple/holy
     textColor: 0xFFFFFF,
     emoji: '⚔️',
@@ -60,7 +70,7 @@ export const SYMBOL_CONFIGS: Record<SymbolType, SymbolConfig> = {
     type: SymbolType.WAR_HAMMER,
     name: 'War Hammer',
     value: 6, // 6 HP damage
-    probability: 7, // Extremely rare (7% of total weight)
+    probability: 7, // Extremely rare (7% of remaining weight)
     color: 0x8B4513, // Dark brown/handle
     textColor: 0xFFFFFF,
     emoji: '🔨',
@@ -70,7 +80,7 @@ export const SYMBOL_CONFIGS: Record<SymbolType, SymbolConfig> = {
     type: SymbolType.MAGIC_STAFF,
     name: 'Magic Staff',
     value: 7.5, // 6-9 HP damage (average for calculations)
-    probability: 3, // Legendary (3% of total weight)
+    probability: 3, // Legendary (3% of remaining weight)
     color: 0x4B0082, // Indigo/magical
     textColor: 0xFFFFFF,
     emoji: '🔮',

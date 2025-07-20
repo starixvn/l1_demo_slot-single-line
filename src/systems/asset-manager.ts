@@ -265,6 +265,7 @@ export class AssetManager extends EventTarget {
  * Symbol asset definitions
  */
 const SYMBOL_ASSETS = {
+  [SymbolType.BROKEN]: 'src/assets/images/symbols/broken.png',
   [SymbolType.IRON_SWORD]: 'src/assets/images/symbols/iron-sword.png',
   [SymbolType.BRONZE_AXE]: 'src/assets/images/symbols/bronze-axe.png', 
   [SymbolType.SILVER_SWORD]: 'src/assets/images/symbols/silver-sword.png',
