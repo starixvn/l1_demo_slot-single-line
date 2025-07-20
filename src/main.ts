@@ -127,20 +127,33 @@ function initializeSlotMachine(): void {
   // Create game controller
   gameController = new GameController();
   
-  // Position the game in the center of the screen
+  // Get canvas dimensions for responsive layout
   const app = gameApp.getApp();
+  let canvasWidth = 1920;
+  let canvasHeight = 1080;
+  
   if (app) {
-    gameController.x = app.screen.width / 2;
-    gameController.y = app.screen.height / 2 - 100;
+    canvasWidth = app.screen.width;
+    canvasHeight = app.screen.height;
+    
+    // Position the game in the center of the screen
+    gameController.x = canvasWidth / 2;
+    gameController.y = canvasHeight / 2;
+    
+    // Set canvas dimensions for responsive layout
+    gameController.setCanvasDimensions(canvasWidth, canvasHeight);
   } else {
+    // Fallback positioning
     gameController.x = 960;
-    gameController.y = 440;
+    gameController.y = 540;
+    gameController.setCanvasDimensions(canvasWidth, canvasHeight);
   }
   
   // Add to game container
   gameApp.getGameContainer().addChild(gameController);
   
-  console.log('🎰 Slot machine initialized');
+  console.log('🎰 Slot machine initialized with responsive layout');
+  console.log(`Canvas dimensions: ${canvasWidth}x${canvasHeight}`);
   
   // Set up keyboard controls
   setupKeyboardControls();

@@ -8,6 +8,16 @@ import { MonsterGenerator } from '@/config/monster-config';
 import { GameLoopManager } from '@/systems/game-loop-manager';
 
 /**
+ * Layout configuration for responsive positioning
+ */
+interface LayoutConfig {
+  monsterAreaY: number;
+  weaponAreaY: number;
+  canvasWidth: number;
+  canvasHeight: number;
+}
+
+/**
  * Combat system that connects slot machine results to monster attacks
  */
 export class CombatSystem extends Container {
@@ -32,19 +42,15 @@ export class CombatSystem extends Container {
   }
 
   /**
-   * Set up the combat system layout
+   * Set up the combat system layout with default positioning
    */
   private setupCombatSystem(): void {
     // Create slot machine
     this.slotMachine = new SlotMachine();
-    this.slotMachine.x = 0;
-    this.slotMachine.y = 150;
     this.addChild(this.slotMachine);
     
     // Create monsters trail
     this.monstersTrail = new MonstersTrail();
-    this.monstersTrail.x = 0;
-    this.monstersTrail.y = 0;
     this.addChild(this.monstersTrail);
     
     // Create effects layer (on top)
@@ -52,6 +58,48 @@ export class CombatSystem extends Container {
     this.addChild(this.effects);
     
     console.log('CombatSystem: Initialized slot machine vs monster combat');
+  }
+
+  /**
+   * Update layout positioning based on responsive design requirements
+   */
+  public updateLayout(config: LayoutConfig): void {
+    const { monsterAreaY, weaponAreaY, canvasWidth, canvasHeight } = config;
+    
+    // Position monster trails in the top 30% area
+    this.monstersTrail.x = 0; // Centered horizontally
+    this.monstersTrail.y = monsterAreaY;
+    
+    // Update monsters trail layout for the new area
+    this.monstersTrail.updateAreaLayout({
+      areaHeight: canvasHeight * 0.30,
+      areaWidth: canvasWidth * 0.8, // Use 80% of width for content
+      centerX: 0,
+      topY: 0
+    });
+    
+    // Position slot machine in the weapon area (40% of canvas height)
+    this.slotMachine.x = 0; // Centered horizontally
+    this.slotMachine.y = weaponAreaY;
+    
+    // Update slot machine layout for the new area
+    this.slotMachine.updateAreaLayout({
+      areaHeight: canvasHeight * 0.40,
+      areaWidth: canvasWidth * 0.8, // Use 80% of width for content
+      centerX: 0,
+      topY: 0
+    });
+    
+    // Effects layer follows the combat areas
+    this.effects.x = 0;
+    this.effects.y = monsterAreaY;
+    
+    console.log('CombatSystem: Layout updated for responsive design', {
+      monsterAreaY,
+      weaponAreaY,
+      canvasWidth,
+      canvasHeight
+    });
   }
 
   /**
@@ -168,24 +216,17 @@ export class CombatSystem extends Container {
       return combatResults;
     }
     
-    // Attack with each weapon symbol
-    for (const weapon of weaponSymbols) {
-      const combatResult = this.attackWithWeapon(weapon);
-      if (combatResult) {
-        combatResults.push(combatResult);
-        
-        // Show visual effects
-        await this.showCombatEffects(combatResult);
-        
-        // Handle monster defeat and switching
-        if (combatResult.monsterDefeated) {
-          await this.monstersTrail.handleMonsterDefeat(combatResult);
-        }
-        
-        // Small delay between attacks for visual appeal
-        if (weaponSymbols.length > 1) {
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
+    // Attack monster with all weapon symbols at once
+    const attackResults = this.monstersTrail.attackMonster(weaponSymbols);
+    combatResults.push(...attackResults);
+    
+    // Show visual effects for each attack
+    for (const result of attackResults) {
+      await this.showCombatEffects(result);
+      
+      // Small delay between attacks for visual appeal
+      if (attackResults.length > 1) {
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
     }
     
@@ -195,43 +236,23 @@ export class CombatSystem extends Container {
       
       console.log('🎉 THREE OF A KIND BONUS ATTACK! 🎉');
       
-      // Extra powerful attack
-      const bonusResult = this.attackWithWeapon(weaponSymbols[0], true);
-      if (bonusResult) {
+      // Extra powerful attack - attack again with the same weapon
+      const bonusResults = this.monstersTrail.attackMonster([weaponSymbols[0]]);
+      if (bonusResults.length > 0) {
+        const bonusResult = bonusResults[0];
+        // Apply bonus attack multiplier
+        bonusResult.damage = Math.round(bonusResult.damage * 1.5);
+        bonusResult.isCritical = true; // Bonus attacks are always critical
+        
         combatResults.push(bonusResult);
         await this.showCombatEffects(bonusResult, true);
-        
-        // Handle monster defeat from bonus attack
-        if (bonusResult.monsterDefeated) {
-          await this.monstersTrail.handleMonsterDefeat(bonusResult);
-        }
       }
     }
     
     return combatResults;
   }
   
-  /**
-   * Attack the current monster with a specific weapon
-   */
-  private attackWithWeapon(weapon: SymbolType, isBonusAttack: boolean = false): CombatResult | null {
-    const currentMonster = this.monstersTrail.getCurrentMonster();
-    if (!currentMonster || !currentMonster.isAlive()) {
-      return null;
-    }
-    
-    console.log(`Attacking with ${weapon}${isBonusAttack ? ' (BONUS ATTACK)' : ''}`);
-    
-    let result = currentMonster.takeDamage(weapon);
-    
-    // Apply bonus attack multiplier
-    if (isBonusAttack) {
-      result.damage = Math.round(result.damage * 1.5);
-      result.isCritical = true; // Bonus attacks are always critical
-    }
-    
-    return result;
-  }
+
   
   /**
    * Show visual effects for combat results
@@ -323,16 +344,13 @@ export class CombatSystem extends Container {
    * Force attack current monster (for testing)
    */
   async testAttackMonster(weapon: SymbolType): Promise<CombatResult | null> {
-    const result = this.attackWithWeapon(weapon);
-    if (result) {
+    const results = this.monstersTrail.attackMonster([weapon]);
+    if (results.length > 0) {
+      const result = results[0];
       await this.showCombatEffects(result);
-      
-      // Handle monster defeat if it occurred
-      if (result.monsterDefeated) {
-        await this.monstersTrail.handleMonsterDefeat(result);
-      }
+      return result;
     }
-    return result;
+    return null;
   }
   
   /**

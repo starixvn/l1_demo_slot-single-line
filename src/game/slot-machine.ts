@@ -5,7 +5,17 @@ import { SymbolGenerator, SYMBOL_CONFIGS, SLOT_CONFIG } from '@/config/symbol-co
 import { RespinManager } from '@/systems/respin-manager';
 
 /**
- * Main slot machine class that manages reels and game logic
+ * Area layout configuration for responsive positioning
+ */
+interface AreaLayoutConfig {
+  areaHeight: number;
+  areaWidth: number;
+  centerX: number;
+  topY: number;
+}
+
+/**
+ * Main slot machine class that manages reels and game logic with responsive layout
  */
 export class SlotMachine extends Container {
   private reels: Reel[] = [];
@@ -16,6 +26,14 @@ export class SlotMachine extends Container {
   private respinText!: Text;
   private balance: number = 1000; // Starting balance
   private respinManager: RespinManager;
+
+  // Layout configuration
+  private areaConfig: AreaLayoutConfig = {
+    areaHeight: 432, // Default 40% of 1080
+    areaWidth: 1536, // Default 80% of 1920
+    centerX: 0,
+    topY: 0
+  };
 
   constructor() {
     super();
@@ -33,13 +51,58 @@ export class SlotMachine extends Container {
   }
 
   /**
+   * Update the area layout for responsive design
+   */
+  public updateAreaLayout(config: AreaLayoutConfig): void {
+    this.areaConfig = config;
+    this.repositionElements();
+    console.log('SlotMachine: Area layout updated', config);
+  }
+
+  /**
+   * Reposition all elements according to the current area configuration
+   */
+  private repositionElements(): void {
+    const { areaHeight, centerX, topY } = this.areaConfig;
+    
+    // Position title at the top of the weapon area
+    this.titleText.x = centerX;
+    this.titleText.y = topY + 20;
+    
+    // Calculate reel area (centered in the weapon area)
+    const reelAreaHeight = Math.min(areaHeight * 0.6, SLOT_CONFIG.REEL_HEIGHT);
+    const reelAreaY = topY + areaHeight * 0.3; // Center reels vertically in area
+    
+    // Position reels horizontally centered
+    const totalReelWidth = (SLOT_CONFIG.REEL_WIDTH * 3) + (SLOT_CONFIG.REEL_SPACING * 2);
+    const startX = centerX - totalReelWidth / 2;
+    
+    this.reels.forEach((reel, index) => {
+      reel.x = startX + (index * (SLOT_CONFIG.REEL_WIDTH + SLOT_CONFIG.REEL_SPACING)) + SLOT_CONFIG.REEL_WIDTH / 2;
+      reel.y = reelAreaY;
+    });
+    
+    // Position text elements below reels
+    const textAreaY = reelAreaY + reelAreaHeight + 20;
+    
+    this.resultText.x = centerX;
+    this.resultText.y = textAreaY;
+    
+    this.balanceText.x = centerX;
+    this.balanceText.y = textAreaY + 30;
+    
+    this.respinText.x = centerX;
+    this.respinText.y = textAreaY + 60;
+  }
+
+  /**
    * Set up the slot machine layout and components
    */
   private setupSlotMachine(): void {
     // Create title
     const titleStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 32,
+      fontSize: 28, // Slightly smaller for responsive design
       fontWeight: 'bold',
       fill: 0xFFFFFF,
       align: 'center',
@@ -47,8 +110,6 @@ export class SlotMachine extends Container {
     
     this.titleText = new Text('🎰 WEAPON SLOT MACHINE 🎰', titleStyle);
     this.titleText.anchor.set(0.5, 0);
-    this.titleText.x = 0;
-    this.titleText.y = -100;
     this.addChild(this.titleText);
     
     // Create reels
@@ -57,7 +118,7 @@ export class SlotMachine extends Container {
     // Create result display
     const resultStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 24,
+      fontSize: 20, // Adjusted size for responsive layout
       fontWeight: 'bold',
       fill: 0xFFFFFF,
       align: 'center',
@@ -65,37 +126,34 @@ export class SlotMachine extends Container {
     
     this.resultText = new Text('Click SPIN to start!', resultStyle);
     this.resultText.anchor.set(0.5, 0);
-    this.resultText.x = 0;
-    this.resultText.y = SLOT_CONFIG.REEL_HEIGHT + 50;
     this.addChild(this.resultText);
     
     // Create balance display
     const balanceStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 20,
+      fontSize: 18, // Adjusted size
       fill: 0xFFD700,
       align: 'center',
     });
     
     this.balanceText = new Text(`Balance: ${this.balance} coins`, balanceStyle);
     this.balanceText.anchor.set(0.5, 0);
-    this.balanceText.x = 0;
-    this.balanceText.y = SLOT_CONFIG.REEL_HEIGHT + 100;
     this.addChild(this.balanceText);
     
     // Create respin display
     const respinStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 16,
+      fontSize: 14, // Adjusted size
       fill: 0x00FFFF,
       align: 'center',
     });
     
     this.respinText = new Text('', respinStyle);
     this.respinText.anchor.set(0.5, 0);
-    this.respinText.x = 0;
-    this.respinText.y = SLOT_CONFIG.REEL_HEIGHT + 130;
     this.addChild(this.respinText);
+    
+    // Initial positioning
+    this.repositionElements();
   }
   
   /**

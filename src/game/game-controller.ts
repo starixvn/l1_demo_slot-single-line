@@ -6,7 +6,7 @@ import { PlayerInfoDisplay } from '@/ui/player-info-display';
 import { SettingsPanel } from '@/ui/settings-panel';
 
 /**
- * Game controller that manages user interactions and game flow
+ * Game controller that manages user interactions and game flow with new responsive layout
  */
 export class GameController extends Container {
   private combatSystem!: CombatSystem;
@@ -19,6 +19,13 @@ export class GameController extends Container {
   private playerInfoDisplay!: PlayerInfoDisplay;
   private settingsPanel!: SettingsPanel;
 
+  // Layout configuration based on canvas dimensions
+  private canvasWidth: number = 1920;
+  private canvasHeight: number = 1080;
+  private readonly MONSTER_AREA_HEIGHT_RATIO = 0.30;
+  private readonly WEAPON_AREA_HEIGHT_RATIO = 0.40;
+  private readonly UI_PADDING = 20;
+
   constructor() {
     super();
     
@@ -27,21 +34,30 @@ export class GameController extends Container {
     this.setupGameController();
     this.setupGameLoopListeners();
     this.setupUIComponents();
+    
+    // Position all elements after everything is created
+    this.repositionAllElements();
   }
 
   /**
-   * Set up the game controller components
+   * Set canvas dimensions for responsive layout calculations
+   */
+  public setCanvasDimensions(width: number, height: number): void {
+    this.canvasWidth = width;
+    this.canvasHeight = height;
+    this.repositionAllElements();
+  }
+
+  /**
+   * Set up the game controller components with new layout
    */
   private setupGameController(): void {
     // Create combat system (includes slot machine and monsters)
     this.combatSystem = new CombatSystem();
-    this.combatSystem.x = 0;
-    this.combatSystem.y = 0;
     this.addChild(this.combatSystem);
     
     // Create button container
     this.buttonContainer = new Container();
-    this.buttonContainer.y = 400;
     this.addChild(this.buttonContainer);
     
     // Create buttons
@@ -50,7 +66,7 @@ export class GameController extends Container {
     // Create status display
     this.createStatusDisplay();
     
-    console.log('GameController: Initialized');
+    console.log('GameController: Initialized with new responsive layout');
   }
 
   /**
@@ -65,30 +81,82 @@ export class GameController extends Container {
     this.settingsPanel = new SettingsPanel();
     this.addChild(this.settingsPanel);
     
-    // Position UI elements based on screen size
-    this.positionUIElements();
-    
     console.log('GameController: UI components setup complete');
   }
 
   /**
-   * Position UI elements relative to the game area
+   * Position all UI elements according to the new responsive layout
    */
-  private positionUIElements(): void {
-    // Position player info display at bottom of screen
-    const infoSize = this.playerInfoDisplay.getDisplaySize();
-    this.playerInfoDisplay.setDisplayPosition(
-      -infoSize.width / 2,  // Center horizontally
-      350  // Bottom of game area
-    );
+  private repositionAllElements(): void {
+    const centerX = 0; // Game controller is already centered
+    const topY = -this.canvasHeight / 2;
+    const bottomY = this.canvasHeight / 2;
     
-    // Position settings gear button in top-right corner
-    this.settingsPanel.setPosition(380, -280);
+    // Calculate area boundaries
+    const monsterAreaHeight = this.canvasHeight * this.MONSTER_AREA_HEIGHT_RATIO;
+    const weaponAreaHeight = this.canvasHeight * this.WEAPON_AREA_HEIGHT_RATIO;
     
-    // Set popup center position (center of screen)
-    this.settingsPanel.setPopupCenter(0, 0);
+    const monsterAreaTop = topY + this.UI_PADDING;
+    const monsterAreaBottom = monsterAreaTop + monsterAreaHeight;
     
-    console.log('GameController: UI elements positioned');
+    const weaponAreaTop = monsterAreaBottom + this.UI_PADDING;
+    const weaponAreaBottom = weaponAreaTop + weaponAreaHeight;
+    
+    // 1. Position Combat System (Monster trails at top, Weapon slot below)
+    if (this.combatSystem) {
+      this.positionCombatSystem(centerX, monsterAreaTop, weaponAreaTop);
+    }
+    
+    // 2. Position Settings Panel (top-left corner)
+    if (this.settingsPanel) {
+      this.settingsPanel.setPosition(
+        -this.canvasWidth / 2 + this.UI_PADDING + 25, // Slightly offset from edge
+        topY + this.UI_PADDING + 25
+      );
+      this.settingsPanel.setPopupCenter(centerX, 0); // Center popup on screen
+    }
+    
+    // 3. Position Control Buttons (below weapon slot)
+    if (this.buttonContainer) {
+      const buttonsY = weaponAreaBottom + this.UI_PADDING + 30;
+      this.buttonContainer.x = centerX;
+      this.buttonContainer.y = buttonsY;
+      
+      // 4. Position Player Info Panel (below buttons)
+      if (this.playerInfoDisplay) {
+        const infoSize = this.playerInfoDisplay.getDisplaySize();
+        this.playerInfoDisplay.setDisplayPosition(
+          centerX - infoSize.width / 2,
+          buttonsY + 60 // Below buttons with spacing
+        );
+      }
+    }
+    
+    // 5. Position Status Display (left-bottom corner)
+    if (this.statusText) {
+      this.statusText.x = -this.canvasWidth / 2 + this.UI_PADDING;
+      this.statusText.y = bottomY - 100; // Above bottom edge
+    }
+    
+    console.log('GameController: All elements repositioned for new layout');
+  }
+
+  /**
+   * Position the combat system components (monster trails and weapon slot)
+   */
+  private positionCombatSystem(centerX: number, monsterAreaTop: number, weaponAreaTop: number): void {
+    if (!this.combatSystem) return;
+    
+    this.combatSystem.x = centerX;
+    this.combatSystem.y = 0;
+    
+    // Update combat system internal layout
+    this.combatSystem.updateLayout({
+      monsterAreaY: monsterAreaTop,
+      weaponAreaY: weaponAreaTop,
+      canvasWidth: this.canvasWidth,
+      canvasHeight: this.canvasHeight
+    });
   }
 
   /**
@@ -97,14 +165,12 @@ export class GameController extends Container {
   private createStatusDisplay(): void {
     const statusStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 14,
+      fontSize: 12, // Smaller font for status
       fill: 0xAAAAAA,
       align: 'left',
     });
     
     this.statusText = new Text('', statusStyle);
-    this.statusText.x = -400;
-    this.statusText.y = -200;
     this.addChild(this.statusText);
     
     this.updateStatusDisplay();
@@ -140,7 +206,7 @@ export class GameController extends Container {
    */
   private updateStatusDisplay(): void {
     const stats = this.gameLoopManager.getGameStats();
-    this.statusText.text = `Game Status:\n${stats}`;
+    this.statusText.text = `Status:\n${stats}`;
   }
 
   /**
@@ -170,13 +236,15 @@ export class GameController extends Container {
   }
   
   /**
-   * Create interactive buttons
+   * Create interactive buttons with new horizontal layout
    */
   private createButtons(): void {
     console.log('GameController: Creating buttons...');
     
-    // Spin button
-    this.spinButton = this.createButton('🎰 SPIN 🎰', 0x2ECC71, -150, 0);
+    const buttonSpacing = 180; // Equal spacing between buttons
+    
+    // Spin button (left)
+    this.spinButton = this.createButton('🎰 SPIN 🎰', 0x2ECC71, -buttonSpacing, 0);
     this.spinButton.eventMode = 'static';
     this.spinButton.cursor = 'pointer';
     this.spinButton.on('pointerdown', () => {
@@ -187,18 +255,8 @@ export class GameController extends Container {
     
     console.log('GameController: Spin button created and added to container');
     
-    // Test win button (for demonstration)
-    this.testButton = this.createButton('Test Win', 0xF39C12, 0, 0);
-    this.testButton.eventMode = 'static';
-    this.testButton.cursor = 'pointer';
-    this.testButton.on('pointerdown', () => {
-      console.log('GameController: Test button clicked');
-      this.handleTestWin();
-    });
-    this.buttonContainer.addChild(this.testButton);
-    
-    // Reset button
-    this.resetButton = this.createButton('Reset', 0xE74C3C, 150, 0);
+    // Reset button (center)
+    this.resetButton = this.createButton('Reset', 0xE74C3C, 0, 0);
     this.resetButton.eventMode = 'static';
     this.resetButton.cursor = 'pointer';
     this.resetButton.on('pointerdown', () => {
@@ -206,6 +264,16 @@ export class GameController extends Container {
       this.handleReset();
     });
     this.buttonContainer.addChild(this.resetButton);
+    
+    // Test win button (right)
+    this.testButton = this.createButton('Test Win', 0xF39C12, buttonSpacing, 0);
+    this.testButton.eventMode = 'static';
+    this.testButton.cursor = 'pointer';
+    this.testButton.on('pointerdown', () => {
+      console.log('GameController: Test button clicked');
+      this.handleTestWin();
+    });
+    this.buttonContainer.addChild(this.testButton);
     
     console.log('GameController: All buttons created successfully');
   }
