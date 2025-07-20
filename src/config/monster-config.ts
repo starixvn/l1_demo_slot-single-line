@@ -367,13 +367,39 @@ export class MonsterGenerator {
 }
 
 /**
- * Monster asset definitions
+ * Monster asset paths (individual images - to be replaced by spritesheets)
  */
 export const MONSTER_ASSETS = {
   [MonsterType.GRUMBLE_GREMLIN]: 'src/assets/images/monsters/grumble-gremlin.png',
   [MonsterType.VENOM]: 'src/assets/images/monsters/venom.png',
   [MonsterType.MUMMY]: 'src/assets/images/monsters/mummy.png',
   [MonsterType.FIERCE_HELLHOUND]: 'src/assets/images/monsters/fierce-hellhound.png',
+} as const;
+
+/**
+ * Monster spritesheets configuration
+ */
+export const MONSTER_SPRITESHEETS = {
+  [MonsterType.GRUMBLE_GREMLIN]: {
+    name: 'gremlin_spritesheet',
+    url: 'src/assets/spritesheets/gremlin.json',
+    type: 'spritesheet' as const,
+    defaultFrame: 'Wraith_01_Attack_000.png', // Use first frame as default
+    animationFrames: [
+      'Wraith_01_Attack_000.png',
+      'Wraith_01_Attack_001.png',
+      'Wraith_01_Attack_002.png',
+      'Wraith_01_Attack_003.png',
+      'Wraith_01_Attack_004.png',
+      'Wraith_01_Attack_005.png',
+      'Wraith_01_Attack_006.png',
+      'Wraith_01_Attack_007.png',
+      'Wraith_01_Attack_008.png',
+      'Wraith_01_Attack_009.png',
+      'Wraith_01_Attack_010.png',
+      'Wraith_01_Attack_011.png',
+    ]
+  }
 } as const;
 
 /**

@@ -10,7 +10,7 @@ import type {
 import { GAME_CONSTANTS } from '@/config/game-config';
 import { SymbolType } from '@/types/slot-types';
 import { MonsterType } from '@/types/monster-types';
-import { MONSTER_ASSETS } from '@/config/monster-config';
+import { MONSTER_ASSETS, MONSTER_SPRITESHEETS } from '@/config/monster-config';
 
 /**
  * High-performance asset manager for PIXI.js with error handling and caching
@@ -363,4 +363,86 @@ export const getMonsterTexture = (monsterType: MonsterType): Texture | null => {
  */
 export const areMonsterTexturesLoaded = (): boolean => {
   return monsterTextures.size === Object.keys(MONSTER_ASSETS).length;
+}; 
+
+/**
+ * Loaded monster spritesheets
+ */
+const monsterSpritesheets: Map<MonsterType, Spritesheet> = new Map();
+
+/**
+ * Load monster spritesheet assets
+ */
+export const loadMonsterSpritesheets = async (): Promise<void> => {
+  try {
+    console.log('Loading monster spritesheets...');
+    
+    // Load spritesheets that are defined
+    const spritesheetPromises = Object.entries(MONSTER_SPRITESHEETS).map(async ([monsterType, config]) => {
+      try {
+        const spritesheet = await Assets.load<Spritesheet>(config.url);
+        monsterSpritesheets.set(monsterType as MonsterType, spritesheet);
+        console.log(`✅ Loaded spritesheet for: ${monsterType} with ${Object.keys(spritesheet.textures).length} frames`);
+      } catch (error) {
+        console.error(`❌ Failed to load spritesheet for ${monsterType}:`, error);
+      }
+    });
+    
+    await Promise.all(spritesheetPromises);
+    console.log('✅ Monster spritesheets loading completed');
+    
+  } catch (error) {
+    console.error('❌ Error loading monster spritesheets:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get spritesheet for a monster (if available)
+ */
+export const getMonsterSpritesheet = (monsterType: MonsterType): Spritesheet | null => {
+  return monsterSpritesheets.get(monsterType) || null;
+};
+
+/**
+ * Get default texture from spritesheet or fallback to individual texture
+ */
+export const getMonsterTextureEnhanced = (monsterType: MonsterType): Texture | null => {
+  // First try to get from spritesheet
+  const spritesheet = getMonsterSpritesheet(monsterType);
+  const spritesheetConfig = MONSTER_SPRITESHEETS[monsterType as keyof typeof MONSTER_SPRITESHEETS];
+  
+  if (spritesheet && spritesheetConfig) {
+    const defaultFrame = spritesheetConfig.defaultFrame;
+    const texture = spritesheet.textures[defaultFrame];
+    
+    if (texture) {
+      return texture;
+    }
+  }
+  
+  // Fallback to individual texture
+  return monsterTextures.get(monsterType) || null;
+};
+
+/**
+ * Get animation frames from spritesheet
+ */
+export const getMonsterAnimationFrames = (monsterType: MonsterType): Texture[] => {
+  const spritesheet = getMonsterSpritesheet(monsterType);
+  const spritesheetConfig = MONSTER_SPRITESHEETS[monsterType as keyof typeof MONSTER_SPRITESHEETS];
+  
+  if (!spritesheet || !spritesheetConfig) {
+    return [];
+  }
+  
+  const frameNames = spritesheetConfig.animationFrames;
+  return frameNames.map((frameName: string) => spritesheet.textures[frameName]).filter(Boolean);
+};
+
+/**
+ * Check if monster has spritesheet available
+ */
+export const hasMonsterSpritesheet = (monsterType: MonsterType): boolean => {
+  return monsterSpritesheets.has(monsterType);
 }; 

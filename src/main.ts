@@ -59,8 +59,12 @@ async function initializeGame(): Promise<void> {
 
     // Load monster assets for monster images  
     console.log('👹 Loading monster assets...');
-    const { loadMonsterAssets } = await import('@/systems/asset-manager');
+    const { loadMonsterAssets, loadMonsterSpritesheets } = await import('@/systems/asset-manager');
     await loadMonsterAssets();
+
+    // Load monster spritesheets for animations
+    console.log('🎮 Loading monster spritesheets...');
+    await loadMonsterSpritesheets();
 
     // Start the game
     gameApp.start();
