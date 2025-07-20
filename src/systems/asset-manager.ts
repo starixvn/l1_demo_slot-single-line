@@ -265,13 +265,13 @@ export class AssetManager extends EventTarget {
  * Symbol asset definitions
  */
 const SYMBOL_ASSETS = {
-  [SymbolType.IRON_SWORD]: 'src/assets/images/symbols/iron-sword.jpeg',
-  [SymbolType.BRONZE_AXE]: 'src/assets/images/symbols/bronze-axe.jpeg', 
-  [SymbolType.SILVER_SWORD]: 'src/assets/images/symbols/silver-sword.jpeg',
-  [SymbolType.IRON_AXE]: 'src/assets/images/symbols/iron-axe.jpeg',
-  [SymbolType.CRUSADER_BLADE]: 'src/assets/images/symbols/crusader-blade.jpeg',
-  [SymbolType.WAR_HAMMER]: 'src/assets/images/symbols/war-hammer.jpeg',
-  [SymbolType.MAGIC_STAFF]: 'src/assets/images/symbols/magic-staff.jpeg',
+  [SymbolType.IRON_SWORD]: 'src/assets/images/symbols/iron-sword.png',
+  [SymbolType.BRONZE_AXE]: 'src/assets/images/symbols/bronze-axe.png', 
+  [SymbolType.SILVER_SWORD]: 'src/assets/images/symbols/silver-sword.png',
+  [SymbolType.IRON_AXE]: 'src/assets/images/symbols/iron-axe.png',
+  [SymbolType.CRUSADER_BLADE]: 'src/assets/images/symbols/crusader-blade.png',
+  [SymbolType.WAR_HAMMER]: 'src/assets/images/symbols/war-hammer.png',
+  [SymbolType.MAGIC_STAFF]: 'src/assets/images/symbols/magic-staff.png',
 } as const;
 
 /**

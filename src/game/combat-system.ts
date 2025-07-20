@@ -88,7 +88,10 @@ export class CombatSystem extends Container {
     spinResult: SpinResult;
     combatResults: CombatResult[];
   }> {
+    console.log('CombatSystem: performCombatSpin() called');
+    
     if (!this.gameLoopManager.canSpin()) {
+      console.log('CombatSystem: Cannot spin, gameLoopManager.canSpin() returned false');
       return {
         spinResult: {
           reels: [],
@@ -101,14 +104,19 @@ export class CombatSystem extends Container {
     }
     
     // Set state to spinning
+    console.log('CombatSystem: Setting state to SPINNING');
     this.gameLoopManager.setState(GameState.SPINNING);
     
     try {
       // Determine if this is a respin or regular spin
       const isRespin = this.gameLoopManager.isInRespinMode();
+      console.log(`CombatSystem: Calling slot machine ${isRespin ? 'respin' : 'spin'}()`);
+      
       const spinResult = isRespin ? 
         await this.slotMachine.respin() : 
         await this.slotMachine.spin();
+        
+      console.log('CombatSystem: Slot machine spin completed, result:', spinResult);
       
       // Process combat based on spin results
       const combatResults = await this.processCombatFromSpin(spinResult);
@@ -129,6 +137,8 @@ export class CombatSystem extends Container {
       } else {
         await this.gameLoopManager.processSpinResult(spinResult);
       }
+      
+      console.log('CombatSystem: performCombatSpin() completing successfully');
       
       return {
         spinResult,

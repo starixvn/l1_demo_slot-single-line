@@ -47,9 +47,12 @@ class TweenManager {
     };
 
     this.tweening.push(tween);
+    
+    console.log(`TweenManager: Creating tween for ${property} from ${tween.propertyBeginValue} to ${target} over ${time}ms. Active tweens: ${this.tweening.length}`);
 
     // Add ticker if not already added
     if (!this.tickerAdded) {
+      console.log('TweenManager: Adding ticker for first time');
       Ticker.shared.add(this.updateTweens.bind(this));
       this.tickerAdded = true;
     }
@@ -69,12 +72,20 @@ class TweenManager {
       if (t.change) t.change(t);
       if (phase === 1) {
         t.object[t.property] = t.target;
-        if (t.complete) t.complete(t);
+        if (t.complete) {
+          console.log(`TweenManager: Tween completed for property ${t.property}`);
+          t.complete(t);
+        }
         remove.push(t);
       }
     }
     for (let i = 0; i < remove.length; i++) {
       this.tweening.splice(this.tweening.indexOf(remove[i]), 1);
+    }
+    
+    // Log active tweens count every 60 frames (about once per second at 60fps)
+    if (this.tweening.length > 0 && Math.random() < 0.016) {
+      console.log(`TweenManager: ${this.tweening.length} active tweens`);
     }
   }
 
@@ -354,76 +365,181 @@ export class Reel extends Container {
     }
     
     this.state.isSpinning = true;
-    console.log(`Reel ${this.reelIndex}: Starting tween-based spin`);
+    console.log(`Reel ${this.reelIndex}: Starting tween-based spin - state set to spinning`);
   }
 
   /**
-   * Stop the reel with target symbol
+   * Stop the reel naturally at a specific symbol (like real slot machines)
    */
-  stop(targetSymbol?: SymbolType): SymbolType {
+  stopAtSymbol(targetSymbol: SymbolType): Promise<SymbolType> {
+    console.log(`Reel ${this.reelIndex}: stopAtSymbol() called for ${targetSymbol}, current spinning state: ${this.state.isSpinning}`);
+    
     if (!this.state.isSpinning) {
-      return this.state.currentSymbol;
+      console.log(`Reel ${this.reelIndex}: Not spinning, returning current symbol ${this.state.currentSymbol}`);
+      return Promise.resolve(this.state.currentSymbol);
     }
     
-    const finalSymbol = targetSymbol || SymbolGenerator.generateSymbol();
+    // Find or place the target symbol in our symbols array
+    let targetSymbolIndex = this.findOrAddTargetSymbol(targetSymbol);
     
-         // Calculate spin parameters (similar to PixiJS example)
-     const extra = Math.floor(Math.random() * 3); // Random extra spins
-     const baseTarget = this.reelPosition + 10 + this.reelIndex * 2 + extra;
-     const target = Math.round(baseTarget); // Ensure we land on a whole number
+    // Calculate the exact position where this symbol will be naturally visible
+    const targetPosition = this.calculateStopPosition(targetSymbolIndex);
     
     // Animation timing (staggered based on reel index)
-    const time = 2000 + this.reelIndex * 400 + extra * 300;
+    const extra = Math.floor(Math.random() * 3); // Random extra spins for variety
+    const time = this.calculateAnimationTime(extra);
     
-    console.log(`Reel ${this.reelIndex}: Stopping at position ${target} for symbol ${finalSymbol}`);
+    console.log(`Reel ${this.reelIndex}: Will naturally stop at position ${targetPosition} to show ${targetSymbol} (${time}ms)`);
     
-         // Start the tween animation
-     this.currentTween = TweenManager.tweenTo(
-       this,
-       'reelPosition',
-       target,
-       time,
-       TweenManager.backout(0.5),
-       undefined, // onChange
-       () => {
-        // onComplete
-        this.state.isSpinning = false;
-        this.state.currentSymbol = finalSymbol;
-        
-        // Ensure target symbol is visible by updating one of the symbols
-        const visibleSymbols = this.symbols.filter(s => s.y >= 0 && s.y < this.SYMBOL_SIZE);
-        if (visibleSymbols.length > 0) {
-          visibleSymbols[0].updateTexture(finalSymbol);
-          this.state.currentSymbol = finalSymbol;
+    // Update state immediately
+    this.state.currentSymbol = targetSymbol;
+    
+    // Return Promise that resolves when animation completes
+    return new Promise<SymbolType>((resolve) => {
+      console.log(`Reel ${this.reelIndex}: Creating Promise for natural animation completion`);
+      
+      // Start the tween animation to the calculated position
+      this.currentTween = TweenManager.tweenTo(
+        this,
+        'reelPosition',
+        targetPosition,
+        time,
+        TweenManager.backout(0.5),
+        undefined, // onChange
+        () => {
+          // onComplete
+          console.log(`Reel ${this.reelIndex}: Natural animation completed`);
+          this.state.isSpinning = false;
+          
+          // Verify the correct symbol is visible (should be natural now)
+          const visibleSymbol = this.getVisibleSymbol();
+          console.log(`Reel ${this.reelIndex}: Naturally landed on ${visibleSymbol} (expected: ${targetSymbol})`);
+          
+          resolve(visibleSymbol);
         }
-        
-        console.log(`Reel ${this.reelIndex}: Stopped on ${finalSymbol}`);
-      }
-    );
-    
-    return finalSymbol;
+      );
+      
+      console.log(`Reel ${this.reelIndex}: Natural animation started`);
+    });
+  }
+
+  /**
+   * Legacy stop method for backward compatibility
+   */
+  stop(targetSymbol?: SymbolType): Promise<SymbolType> {
+    const finalSymbol = targetSymbol || SymbolGenerator.generateSymbol();
+    return this.stopAtSymbol(finalSymbol);
   }
 
   /**
    * Force set a specific symbol
    */
-     setSymbol(symbol: SymbolType): void {
-     this.state.currentSymbol = symbol;
-     this.state.isSpinning = false;
-     
-     // Cancel any current tween
-     if (this.currentTween) {
-       // The tween will be automatically removed by TweenManager
-       this.currentTween = undefined;
-     }
-     
-     // Update first visible symbol
-     if (this.symbols.length > 0) {
-       this.symbols[0].updateTexture(symbol);
-     }
-     
-     this.updateDisplay();
-   }
+  setSymbol(symbol: SymbolType): void {
+    // Cancel any current tween
+    if (this.currentTween) {
+      // The tween will be automatically removed by TweenManager
+      this.currentTween = undefined;
+    }
+    
+    // Update state immediately
+    this.state.currentSymbol = symbol;
+    this.state.isSpinning = false;
+    
+    // Reset position to avoid visual glitches
+    this.reelPosition = 0;
+    this.previousReelPosition = 0;
+    
+    // Place the symbol naturally in the reel
+    this.findOrAddTargetSymbol(symbol);
+    
+    // Update display
+    this.updateDisplay();
+    
+    console.log(`Reel ${this.reelIndex}: Symbol force-set to ${symbol}`);
+  }
+
+  /**
+   * Calculate animation time for this reel
+   */
+  private calculateAnimationTime(extraSpins: number = 0): number {
+    return 2000 + this.reelIndex * 400 + extraSpins * 300;
+  }
+
+  /**
+   * Get the total animation time this reel will take
+   */
+  getAnimationTime(): number {
+    const averageExtra = 1.5; // Average of 0, 1, 2
+    return this.calculateAnimationTime(averageExtra);
+  }
+
+  /**
+   * Find target symbol in symbols array, or replace one with it
+   */
+  private findOrAddTargetSymbol(targetSymbol: SymbolType): number {
+    // First, try to find the symbol in existing symbols
+    let targetIndex = -1;
+    for (let i = 0; i < this.symbols.length; i++) {
+      if (this.symbols[i].symbolType === targetSymbol) {
+        targetIndex = i;
+        break;
+      }
+    }
+    
+    // If not found, replace the first symbol with our target
+    if (targetIndex === -1) {
+      console.log(`Reel ${this.reelIndex}: Target symbol ${targetSymbol} not found, adding it at index 0`);
+      this.symbols[0].updateTexture(targetSymbol);
+      targetIndex = 0;
+    } else {
+      console.log(`Reel ${this.reelIndex}: Target symbol ${targetSymbol} found at index ${targetIndex}`);
+    }
+    
+    return targetIndex;
+  }
+
+  /**
+   * Calculate the reel position that will make the target symbol visible in center
+   */
+  private calculateStopPosition(symbolIndex: number): number {
+    // For symbol to be visible in center, we need:
+    // symbol.y = ((reelPosition + symbolIndex) % symbols.length) * SYMBOL_SIZE - SYMBOL_SIZE = 0
+    // This means: (reelPosition + symbolIndex) % symbols.length = 1
+    // So: reelPosition = (1 - symbolIndex + symbols.length) % symbols.length
+    
+    const basePosition = (1 - symbolIndex + this.symbols.length) % this.symbols.length;
+    
+    // Add extra rotations for visual effect (minimum 2 full rotations)
+    const minRotations = 2;
+    const extraRotations = Math.floor(Math.random() * 3) + minRotations; // 2-4 extra rotations
+    const fullRotationsPosition = extraRotations * this.symbols.length;
+    
+    const finalPosition = this.reelPosition + fullRotationsPosition + basePosition;
+    
+    console.log(`Reel ${this.reelIndex}: Symbol ${symbolIndex} - base: ${basePosition}, extra rotations: ${extraRotations}, final position: ${finalPosition}`);
+    
+    return finalPosition;
+  }
+
+  /**
+   * Get the symbol that's currently visible in the center
+   */
+  private getVisibleSymbol(): SymbolType {
+    // Find the symbol closest to center (y around SYMBOL_SIZE/2)
+    let closestSymbol = this.symbols[0];
+    let closestDistance = Infinity;
+    
+    for (const symbol of this.symbols) {
+      const centerY = this.SYMBOL_SIZE / 2;
+      const distance = Math.abs(symbol.y - centerY);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestSymbol = symbol;
+      }
+    }
+    
+    return closestSymbol.symbolType;
+  }
 
   /**
    * Get the current symbol

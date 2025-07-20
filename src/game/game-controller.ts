@@ -150,6 +150,8 @@ export class GameController extends Container {
     const canSpin = this.gameLoopManager.canSpin();
     const currentState = this.gameLoopManager.getCurrentState();
     
+    console.log(`GameController: updateButtonStates() - canSpin: ${canSpin}, currentState: ${currentState}`);
+    
     // Update spin button text based on state
     const spinButtonText = this.spinButton.getChildAt(1) as Text;
     if (currentState === GameState.RESPINNING) {
@@ -163,32 +165,49 @@ export class GameController extends Container {
     // Disable/enable buttons based on state
     this.spinButton.alpha = canSpin ? 1.0 : 0.5;
     this.spinButton.eventMode = canSpin ? 'static' : 'none';
+    
+    console.log(`GameController: Spin button - alpha: ${this.spinButton.alpha}, eventMode: ${this.spinButton.eventMode}`);
   }
   
   /**
    * Create interactive buttons
    */
   private createButtons(): void {
+    console.log('GameController: Creating buttons...');
+    
     // Spin button
     this.spinButton = this.createButton('🎰 SPIN 🎰', 0x2ECC71, -150, 0);
     this.spinButton.eventMode = 'static';
     this.spinButton.cursor = 'pointer';
-    this.spinButton.on('pointerdown', () => this.handleSpin());
+    this.spinButton.on('pointerdown', () => {
+      console.log('GameController: Spin button pointerdown event triggered!');
+      this.handleSpin();
+    });
     this.buttonContainer.addChild(this.spinButton);
+    
+    console.log('GameController: Spin button created and added to container');
     
     // Test win button (for demonstration)
     this.testButton = this.createButton('Test Win', 0xF39C12, 0, 0);
     this.testButton.eventMode = 'static';
     this.testButton.cursor = 'pointer';
-    this.testButton.on('pointerdown', () => this.handleTestWin());
+    this.testButton.on('pointerdown', () => {
+      console.log('GameController: Test button clicked');
+      this.handleTestWin();
+    });
     this.buttonContainer.addChild(this.testButton);
     
     // Reset button
     this.resetButton = this.createButton('Reset', 0xE74C3C, 150, 0);
     this.resetButton.eventMode = 'static';
     this.resetButton.cursor = 'pointer';
-    this.resetButton.on('pointerdown', () => this.handleReset());
+    this.resetButton.on('pointerdown', () => {
+      console.log('GameController: Reset button clicked');
+      this.handleReset();
+    });
     this.buttonContainer.addChild(this.resetButton);
+    
+    console.log('GameController: All buttons created successfully');
   }
   
   /**
@@ -250,14 +269,16 @@ export class GameController extends Container {
    * Handle spin button click
    */
   private async handleSpin(): Promise<void> {
+    console.log('GameController: handleSpin() called - spin button was clicked!');
+    
     if (!this.gameLoopManager.canSpin()) {
-      console.log('GameController: Cannot spin in current state');
+      console.log('GameController: Cannot spin in current state:', this.gameLoopManager.getCurrentState());
       return;
     }
     
     const currentState = this.gameLoopManager.getCurrentState();
     const isRespin = currentState === GameState.RESPINNING;
-    console.log(`GameController: ${isRespin ? 'Respin' : 'Spin'} initiated`);
+    console.log(`GameController: ${isRespin ? 'Respin' : 'Spin'} initiated, current state: ${currentState}`);
     
     // Reset win display at start of new spin (but not respin)
     if (!isRespin) {
@@ -265,8 +286,9 @@ export class GameController extends Container {
     }
     
     try {
+      console.log('GameController: Calling combatSystem.performCombatSpin()');
       const { spinResult, combatResults } = await this.combatSystem.performCombatSpin();
-      console.log('GameController: Combat results:', { spinResult, combatResults });
+      console.log('GameController: Combat results received:', { spinResult, combatResults });
       
       // Update player info display with spin results
       this.updatePlayerInfoFromSpin(spinResult, combatResults, isRespin);

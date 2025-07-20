@@ -159,51 +159,66 @@ export class SlotMachine extends Container {
     
     console.log(`SlotMachine: Starting ${isRespin ? 'respin' : 'spin'}`);
     
-    // Start spinning all reels
-    this.reels.forEach(reel => reel.spin());
+    // 🎯 GENERATE FINAL SYMBOLS IMMEDIATELY (like real slot machines)
+    const finalSymbols: SymbolType[] = this.reels.map(() => SymbolGenerator.generateSymbol());
+    console.log(`SlotMachine: 🎯 PREDETERMINED RESULTS: ${finalSymbols.join(', ')}`);
     
-    // Wait for initial spin-up time
-    await new Promise(resolve => setTimeout(resolve, 800));
+    let reelResults: ReelResult[] = [];
     
-    // Generate final symbols for each reel
-    const targetSymbols: SymbolType[] = this.reels.map(() => SymbolGenerator.generateSymbol());
-    
-    // Stop reels with staggered timing for realistic effect
-    const reelResults: ReelResult[] = [];
-    const stopDelay = 600; // Base delay between reel stops
-    
-    for (let i = 0; i < this.reels.length; i++) {
-      const reel = this.reels[i];
-      const targetSymbol = targetSymbols[i];
+    try {
+      // Start spinning all reels
+      this.reels.forEach(reel => reel.spin());
       
-      // Stop this reel after a delay
-      setTimeout(() => {
-        const finalSymbol = reel.stop(targetSymbol);
-        reelResults[i] = {
-          symbol: finalSymbol,
-          reelIndex: i,
-        };
-        
-                 // Check if all reels have stopped
-         if (reelResults.filter(r => r).length === this.reels.length) {
-           // All reels stopped - we'll handle result in the main flow
-         }
-      }, i * stopDelay);
-    }
-    
-    // Wait for all reels to stop before continuing
-    await new Promise(resolve => {
-      const checkStopped = () => {
-        // Check if all reels have actually finished their animations
-        const allStopped = this.reels.every(reel => !reel.isSpinning());
-        if (allStopped && reelResults.filter(r => r).length === this.reels.length) {
-          resolve(void 0);
-        } else {
-          setTimeout(checkStopped, 100);
+      // Wait for initial spin-up time
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Calculate stagger delays for visual effect
+      const staggerDelays = this.calculateStaggerDelays();
+      
+      console.log(`SlotMachine: Stopping reels with delays: ${staggerDelays.map(d => d + 'ms').join(', ')}`);
+      console.log(`SlotMachine: Each reel will naturally land on its predetermined symbol`);
+      
+      // Create promises for each reel stop with predetermined symbols
+      const reelStopPromises = this.reels.map((reel, i) => {
+        return new Promise<ReelResult>((resolve) => {
+          setTimeout(async () => {
+            try {
+              console.log(`SlotMachine: Starting reel ${i} stop - predetermined symbol: ${finalSymbols[i]}`);
+              const resultSymbol = await reel.stopAtSymbol(finalSymbols[i]);
+              console.log(`SlotMachine: Reel ${i} naturally landed on: ${resultSymbol}`);
+              resolve({
+                symbol: resultSymbol,
+                reelIndex: i,
+              });
+            } catch (error) {
+              console.error(`Reel ${i} stop error:`, error);
+              // Fallback to predetermined symbol if there's an error
+              resolve({
+                symbol: finalSymbols[i],
+                reelIndex: i,
+              });
+            }
+          }, staggerDelays[i]);
+        });
+      });
+      
+      // Wait for all reels to complete their animations
+      console.log('SlotMachine: Waiting for all reels to naturally stop...');
+      reelResults = await Promise.all(reelStopPromises);
+      
+      console.log(`SlotMachine: All reels completed naturally. Results:`, reelResults.map(r => `${r.reelIndex}:${r.symbol}`).join(', '));
+      
+    } catch (error) {
+      console.error(`SlotMachine: Error during ${isRespin ? 'respin' : 'spin'}:`, error);
+      // Reset state on error
+      this.isSpinning = false;
+      this.reels.forEach(reel => {
+        if (reel.isSpinning()) {
+          reel.setSymbol(reel.getCurrentSymbol()); // Force stop
         }
-      };
-      checkStopped();
-    });
+      });
+      return this.createNoSpinResult();
+    }
     
     this.isSpinning = false;
     
@@ -361,11 +376,21 @@ export class SlotMachine extends Container {
    * Set specific symbols (for testing)
    */
   setSymbols(symbols: SymbolType[]): void {
+    // Stop any current spinning
+    if (this.isSpinning) {
+      this.isSpinning = false;
+    }
+    
     symbols.forEach((symbol, index) => {
       if (this.reels[index]) {
         this.reels[index].setSymbol(symbol);
       }
     });
+    
+    // Update display to reflect changes
+    this.updateDisplay();
+    
+    console.log(`SlotMachine: Symbols set to [${symbols.join(', ')}]`);
   }
   
   /**
@@ -387,5 +412,25 @@ export class SlotMachine extends Container {
    */
   getReels(): Reel[] {
     return [...this.reels];
+  }
+
+  /**
+   * Calculate stagger delays for reel stops to align with animation durations
+   */
+  private calculateStaggerDelays(): number[] {
+    // Calculate optimal stagger delays based on reel animation times
+    // We want reels to start stopping at times that create a nice cascade effect
+    // while ensuring the last reel has enough time to complete its animation
+    
+    const baseStaggerDelay = 500; // Base delay between reel stops
+    const delays: number[] = [];
+    
+    for (let i = 0; i < this.reels.length; i++) {
+      // Progressive delays: 0ms, 500ms, 1000ms
+      delays.push(i * baseStaggerDelay);
+    }
+    
+    console.log(`SlotMachine: Calculated stagger delays: ${delays.join('ms, ')}ms`);
+    return delays;
   }
 } 
