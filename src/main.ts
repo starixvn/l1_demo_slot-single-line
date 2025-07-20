@@ -3,25 +3,13 @@ import { GameController } from '@/game/game-controller';
 import type { AssetConfig } from '@/types/game-types';
 
 /**
- * Example asset URLs for demonstration
+ * Game assets for the slot machine
  */
-const EXAMPLE_ASSETS: AssetConfig[] = [
+const GAME_ASSETS: AssetConfig[] = [
   {
-    name: 'background',
-    url: 'https://pixijs.io/examples/examples/assets/bg_grass.jpg',
+    name: 'game-background',
+    url: 'src/assets/images/background/bg.png',
     type: 'texture',
-    priority: 1,
-  },
-  {
-    name: 'bunny',
-    url: 'https://pixijs.io/examples/examples/assets/bunny.png', 
-    type: 'texture',
-    priority: 2,
-  },
-  {
-    name: 'spritesheet',
-    url: 'https://pixijs.io/examples/examples/assets/spritesheet/mc.json',
-    type: 'spritesheet',
     priority: 1,
   },
 ];
@@ -58,7 +46,11 @@ async function initializeGame(): Promise<void> {
 
     // Load game assets
     console.log('📦 Loading game assets...');
-    await gameApp.getAssetManager().loadAssets(EXAMPLE_ASSETS);
+    await gameApp.getAssetManager().loadAssets(GAME_ASSETS);
+    
+    // Set up background image
+    console.log('🖼️ Setting up background...');
+    gameApp.setupBackground();
     
     // Load symbol assets for weapon images
     console.log('⚔️ Loading symbol assets...');

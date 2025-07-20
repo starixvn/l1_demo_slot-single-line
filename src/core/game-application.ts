@@ -1,4 +1,4 @@
-import { Application, Container } from 'pixi.js';
+import { Application, Container, Sprite, Assets } from 'pixi.js';
 import type { GameConfig } from '@/types/game-types';
 import { AssetManager } from '@/systems/asset-manager';
 import { getOptimizedConfig, isMobile, GAME_CONSTANTS } from '@/config/game-config';
@@ -10,6 +10,7 @@ export class GameApplication {
   private app: Application | null = null;
   private assetManager: AssetManager;
   private gameContainer: Container;
+  private backgroundSprite: Sprite | null = null;
   private isInitialized = false;
   private config: GameConfig;
 
@@ -39,7 +40,7 @@ export class GameApplication {
       this.app = new Application({
         width: this.config.width,
         height: this.config.height,
-        backgroundColor: this.config.backgroundColor,
+        backgroundColor: 0x000000, // Dark background as fallback until bg image loads
         resolution: this.config.resolution,
         antialias: this.config.antialias,
         powerPreference: this.config.powerPreference,
@@ -251,6 +252,42 @@ export class GameApplication {
 
     const assetConfigs = AssetManager.createAssetConfigs(urls);
     return this.assetManager.loadAssets(assetConfigs);
+  }
+
+  /**
+   * Set up the game background using the loaded background texture
+   */
+  setupBackground(): void {
+    if (!this.app) return;
+    
+    try {
+      // Get the background texture from loaded assets
+      const backgroundTexture = Assets.get('game-background');
+      
+      if (backgroundTexture) {
+        this.backgroundSprite = new Sprite(backgroundTexture);
+        
+        // Scale and position the background to cover the entire screen
+        const scaleX = this.config.width / backgroundTexture.width;
+        const scaleY = this.config.height / backgroundTexture.height;
+        const scale = Math.max(scaleX, scaleY); // Use max to cover entire screen
+        
+        this.backgroundSprite.scale.set(scale);
+        
+        // Center the background
+        this.backgroundSprite.x = (this.config.width - backgroundTexture.width * scale) / 2;
+        this.backgroundSprite.y = (this.config.height - backgroundTexture.height * scale) / 2;
+        
+        // Add background as the first child (behind everything else)
+        this.app.stage.addChildAt(this.backgroundSprite, 0);
+        
+        console.log('GameApplication: Background image set up successfully');
+      } else {
+        console.warn('GameApplication: Background texture not found');
+      }
+    } catch (error) {
+      console.error('GameApplication: Failed to set up background:', error);
+    }
   }
 
   /**

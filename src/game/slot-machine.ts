@@ -21,7 +21,6 @@ export class SlotMachine extends Container {
   private reels: Reel[] = [];
   private isSpinning: boolean = false;
   private resultText!: Text;
-  private balanceText!: Text;
   private respinText!: Text;
   private balance: number = 1000; // Starting balance
   private respinManager: RespinManager;
@@ -85,11 +84,8 @@ export class SlotMachine extends Container {
     this.resultText.x = centerX;
     this.resultText.y = textAreaY;
     
-    this.balanceText.x = centerX;
-    this.balanceText.y = textAreaY + 30;
-    
     this.respinText.x = centerX;
-    this.respinText.y = textAreaY + 60;
+    this.respinText.y = textAreaY + 30; // Moved up since balance text is removed
   }
 
   /**
@@ -114,19 +110,7 @@ export class SlotMachine extends Container {
     this.resultText.anchor.set(0.5, 0);
     this.addChild(this.resultText);
     
-    // Create balance display
-    const balanceStyle = new TextStyle({
-      fontFamily: 'Arial, sans-serif',
-      fontSize: 18, // Adjusted size
-      fill: 0xFFD700,
-      align: 'center',
-    });
-    
-    this.balanceText = new Text(`Balance: ${this.balance} coins`, balanceStyle);
-    this.balanceText.anchor.set(0.5, 0);
-    this.addChild(this.balanceText);
-    
-    // Create respin display
+    // Create respin display (balance removed - shown in player info panel)
     const respinStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
       fontSize: 14, // Adjusted size
@@ -362,7 +346,8 @@ export class SlotMachine extends Container {
    * Update display elements
    */
   private updateDisplay(): void {
-    this.balanceText.text = `Balance: ${this.balance} coins`;
+    // Balance text removed - now displayed in player info panel
+    // Only respin text and result text are handled by slot machine
   }
 
   /**

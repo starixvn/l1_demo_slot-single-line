@@ -110,7 +110,7 @@ class TweenManager {
 class SymbolDisplay extends Container {
   private symbolSprite?: Sprite;
   private symbolEmoji?: Text;
-  private symbolText!: Text;
+  private borderGraphics!: Graphics;
   private useTextures: boolean;
   public readonly symbolType: SymbolType;
 
@@ -124,6 +124,9 @@ class SymbolDisplay extends Container {
   private createSymbol(symbol: SymbolType): void {
     const config = SYMBOL_CONFIGS[symbol];
     
+    // Create border graphics first (background layer)
+    this.createSymbolBorder();
+    
     if (this.useTextures) {
       this.symbolSprite = new Sprite();
       this.symbolSprite.anchor.set(0.5, 0.5);
@@ -131,24 +134,11 @@ class SymbolDisplay extends Container {
       this.symbolSprite.y = SLOT_CONFIG.REEL_HEIGHT / 2;
       this.addChild(this.symbolSprite);
       
-      const textStyle = new TextStyle({
-        fontFamily: 'Arial, sans-serif',
-        fontSize: 12,
-        fontWeight: 'bold',
-        fill: config.textColor,
-        align: 'center',
-      });
-      
-      this.symbolText = new Text(`${config.name}\n${config.value} HP`, textStyle);
-      this.symbolText.anchor.set(0.5, 0);
-      this.symbolText.x = SLOT_CONFIG.REEL_WIDTH / 2;
-      this.symbolText.y = SLOT_CONFIG.REEL_HEIGHT - 25;
-      this.addChild(this.symbolText);
-      
       const texture = getSymbolTexture(symbol);
       if (texture && this.symbolSprite) {
         this.symbolSprite.texture = texture;
-        const maxSize = Math.min(SLOT_CONFIG.REEL_WIDTH - 40, SLOT_CONFIG.REEL_HEIGHT - 60);
+        // Improved scaling for better image quality - use more of the reel space
+        const maxSize = Math.min(SLOT_CONFIG.REEL_WIDTH - 20, SLOT_CONFIG.REEL_HEIGHT - 20);
         const scale = Math.min(maxSize / texture.width, maxSize / texture.height);
         this.symbolSprite.scale.set(scale);
       } else {
@@ -160,31 +150,43 @@ class SymbolDisplay extends Container {
   }
 
   private createEmojiDisplay(config: any): void {
+    // Larger emoji size since we removed text labels - can use more space
     const emojiStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 48,
+      fontSize: 72, // Increased from 48 for better visibility
       align: 'center',
     });
     
     this.symbolEmoji = new Text(config.emoji || '❓', emojiStyle);
     this.symbolEmoji.anchor.set(0.5, 0.5);
     this.symbolEmoji.x = SLOT_CONFIG.REEL_WIDTH / 2;
-    this.symbolEmoji.y = SLOT_CONFIG.REEL_HEIGHT / 2 - 20;
+    this.symbolEmoji.y = SLOT_CONFIG.REEL_HEIGHT / 2; // Centered vertically since no text below
     this.addChild(this.symbolEmoji);
+  }
+
+  /**
+   * Create a rounded border around the symbol
+   */
+  private createSymbolBorder(): void {
+    this.borderGraphics = new Graphics();
     
-    const textStyle = new TextStyle({
-      fontFamily: 'Arial, sans-serif',
-      fontSize: 16,
-      fontWeight: 'bold',
-      fill: config.textColor,
-      align: 'center',
-    });
+    // Draw rounded rectangle border
+    const borderRadius = 10;
+    const borderWidth = 3;
+    const padding = 5;
     
-    this.symbolText = new Text(config.name, textStyle);
-    this.symbolText.anchor.set(0.5, 0);
-    this.symbolText.x = SLOT_CONFIG.REEL_WIDTH / 2;
-    this.symbolText.y = SLOT_CONFIG.REEL_HEIGHT / 2 + 30;
-    this.addChild(this.symbolText);
+    this.borderGraphics.lineStyle(borderWidth, 0xFFFFFF, 0.8);
+    this.borderGraphics.beginFill(0x000000, 0.1); // Subtle dark background
+    this.borderGraphics.drawRoundedRect(
+      padding,
+      padding,
+      SLOT_CONFIG.REEL_WIDTH - padding * 2,
+      SLOT_CONFIG.REEL_HEIGHT - padding * 2,
+      borderRadius
+    );
+    this.borderGraphics.endFill();
+    
+    this.addChild(this.borderGraphics);
   }
 
   /**
@@ -198,14 +200,13 @@ class SymbolDisplay extends Container {
       const texture = getSymbolTexture(newSymbol);
       if (texture) {
         this.symbolSprite.texture = texture;
-        const maxSize = Math.min(SLOT_CONFIG.REEL_WIDTH - 40, SLOT_CONFIG.REEL_HEIGHT - 60);
+        // Use improved scaling consistent with createSymbol
+        const maxSize = Math.min(SLOT_CONFIG.REEL_WIDTH - 20, SLOT_CONFIG.REEL_HEIGHT - 20);
         const scale = Math.min(maxSize / texture.width, maxSize / texture.height);
         this.symbolSprite.scale.set(scale);
       }
-      this.symbolText.text = `${config.name}\n${config.value} HP`;
     } else if (this.symbolEmoji) {
       this.symbolEmoji.text = config.emoji || '❓';
-      this.symbolText.text = config.name;
     }
   }
 }
