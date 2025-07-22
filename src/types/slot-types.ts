@@ -2,17 +2,15 @@
  * Symbol types in the slot game
  */
 export enum SymbolType {
-  // Non-weapon symbols
-  BROKEN = 'broken',                    // 0 HP damage - most common symbol
-  
-  // Weapon symbols (ordered by damage - low to high)
-  IRON_SWORD = 'iron_sword',        // 1 HP damage
-  BRONZE_AXE = 'bronze_axe',        // 2 HP damage
-  SILVER_SWORD = 'silver_sword',    // 3 HP damage
-  IRON_AXE = 'iron_axe',           // 4 HP damage
-  CRUSADER_BLADE = 'crusader_blade', // 5 HP damage
-  WAR_HAMMER = 'war_hammer',        // 6 HP damage
-  MAGIC_STAFF = 'magic_staff',      // 6-9 HP damage (random)
+  // Symbols ordered by damage (0-7)
+  SYMBOL_0 = 'symbol_0',        // 0 HP damage (was BROKEN)
+  SYMBOL_1 = 'symbol_1',        // 1 HP damage (was IRON_SWORD)
+  SYMBOL_2 = 'symbol_2',        // 2 HP damage (was BRONZE_AXE)
+  SYMBOL_3 = 'symbol_3',        // 3 HP damage (was SILVER_SWORD)
+  SYMBOL_4 = 'symbol_4',        // 4 HP damage (was IRON_AXE)
+  SYMBOL_5 = 'symbol_5',        // 5 HP damage (was CRUSADER_BLADE)
+  SYMBOL_6 = 'symbol_6',        // 6 HP damage (was WAR_HAMMER)
+  SYMBOL_7 = 'symbol_7',        // 6-9 HP damage (was MAGIC_STAFF)
 }
 
 /**

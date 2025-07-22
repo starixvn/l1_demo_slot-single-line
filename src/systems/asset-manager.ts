@@ -264,17 +264,17 @@ export class AssetManager extends EventTarget {
 } 
 
 /**
- * Symbol asset definitions
+ * Symbol asset definitions using the new symbol_{number} pattern
  */
 const SYMBOL_ASSETS = {
-  [SymbolType.BROKEN]: 'src/assets/images/symbols/broken.png',
-  [SymbolType.IRON_SWORD]: 'src/assets/images/symbols/iron-sword.png',
-  [SymbolType.BRONZE_AXE]: 'src/assets/images/symbols/bronze-axe.png', 
-  [SymbolType.SILVER_SWORD]: 'src/assets/images/symbols/silver-sword.png',
-  [SymbolType.IRON_AXE]: 'src/assets/images/symbols/iron-axe.png',
-  [SymbolType.CRUSADER_BLADE]: 'src/assets/images/symbols/crusader-blade.png',
-  [SymbolType.WAR_HAMMER]: 'src/assets/images/symbols/war-hammer.png',
-  [SymbolType.MAGIC_STAFF]: 'src/assets/images/symbols/magic-staff.png',
+  [SymbolType.SYMBOL_0]: 'src/assets/images/symbols/broken.png',         // 0 damage
+  [SymbolType.SYMBOL_1]: 'src/assets/images/symbols/iron-sword.png',     // 1 damage
+  [SymbolType.SYMBOL_2]: 'src/assets/images/symbols/bronze-axe.png',     // 2 damage
+  [SymbolType.SYMBOL_3]: 'src/assets/images/symbols/silver-sword.png',   // 3 damage
+  [SymbolType.SYMBOL_4]: 'src/assets/images/symbols/iron-axe.png',       // 4 damage
+  [SymbolType.SYMBOL_5]: 'src/assets/images/symbols/crusader-blade.png', // 5 damage
+  [SymbolType.SYMBOL_6]: 'src/assets/images/symbols/war-hammer.png',     // 6 damage
+  [SymbolType.SYMBOL_7]: 'src/assets/images/symbols/magic-staff.png',    // 7 damage
 } as const;
 
 /**

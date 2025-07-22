@@ -288,17 +288,17 @@ export class CombatSystem extends Container {
   }
   
   /**
-   * Check if a symbol is a weapon
+   * Check if a symbol is a weapon (anything other than SYMBOL_0/broken)
    */
   private isWeaponSymbol(symbol: SymbolType): boolean {
     return [
-      SymbolType.IRON_SWORD,
-      SymbolType.BRONZE_AXE,
-      SymbolType.SILVER_SWORD,
-      SymbolType.IRON_AXE,
-      SymbolType.CRUSADER_BLADE,
-      SymbolType.WAR_HAMMER,
-      SymbolType.MAGIC_STAFF,
+      SymbolType.SYMBOL_1, // Iron Sword
+      SymbolType.SYMBOL_2, // Bronze Axe
+      SymbolType.SYMBOL_3, // Silver Sword
+      SymbolType.SYMBOL_4, // Iron Axe
+      SymbolType.SYMBOL_5, // Crusader Blade
+      SymbolType.SYMBOL_6, // War Hammer
+      SymbolType.SYMBOL_7, // Magic Staff
     ].includes(symbol);
   }
   

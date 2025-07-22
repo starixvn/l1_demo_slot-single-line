@@ -138,9 +138,20 @@ export class Monster extends Container {
     this.monsterSprite.y = 0; // Center the monster at origin
     
     // Enhanced scaling for better image quality - increased size for spritesheets
-    const maxSize = 140; // Increased from 90 to make monsters more prominent
+    const maxSize = 200; // Increased significantly for better visibility and prominence
     const scale = Math.min(maxSize / this.monsterSprite.width, maxSize / this.monsterSprite.height);
     this.monsterSprite.scale.set(scale);
+    
+    // Debug logging for monster dimensions
+    const finalWidth = this.monsterSprite.width * scale;
+    const finalHeight = this.monsterSprite.height * scale;
+    console.log(`Monster: ${this.config.name} dimensions:`, {
+      originalWidth: this.monsterSprite.width,
+      originalHeight: this.monsterSprite.height,
+      internalScale: scale,
+      finalSpriteSize: `${finalWidth.toFixed(0)}x${finalHeight.toFixed(0)}px`,
+      maxSizeLimit: maxSize
+    });
     
     // Add visual enhancements
     this.addMonsterEffects();
@@ -305,22 +316,14 @@ export class Monster extends Container {
   private positionMonsterInfo(): void {
     if (!this.monsterInfo) return;
     
-    let monsterBottomY = 0; // Default for emoji fallback
+    // Simple approach: monster sprite is centered at y=0, so just position info at a fixed offset
+    // This accounts for the typical monster size and provides consistent spacing
+    const infoOffset = 110; // Fixed offset below monster center (works for 200px monsters)
     
-    // Calculate bottom position based on monster visual type
-    if (this.monsterSprite) {
-      // Get the bottom edge of the monster sprite
-      const spriteBounds = this.monsterSprite.getBounds();
-      monsterBottomY = spriteBounds.height / 2; // Half height since sprite is centered
-    } else if (this.monsterEmoji) {
-      // Get the bottom edge of the emoji text
-      const emojiBounds = this.monsterEmoji.getBounds();
-      monsterBottomY = emojiBounds.height / 2; // Half height since emoji is centered
-    }
-    
-    // Position monster info container with small padding below monster
     this.monsterInfo.x = 0; // Center horizontally
-    this.monsterInfo.y = monsterBottomY + 5; // 5px padding below monster
+    this.monsterInfo.y = infoOffset; // Simple fixed position below monster
+    
+    console.log(`Monster: ${this.config.name} info positioned at fixed offset y=${infoOffset}`);
   }
   
   /**
@@ -524,6 +527,22 @@ export class Monster extends Container {
   public setBaseScale(scale: number): void {
     this.baseScale = scale;
     this.scale.set(scale);
+    
+    // Debug logging for final monster size
+    if (this.monsterSprite) {
+      const internalScale = this.monsterSprite.scale.x;
+      const finalEffectiveWidth = this.monsterSprite.width * internalScale * scale;
+      const finalEffectiveHeight = this.monsterSprite.height * internalScale * scale;
+      console.log(`Monster: ${this.config.name} final size with baseScale ${scale}:`, {
+        effectiveSize: `${finalEffectiveWidth.toFixed(0)}x${finalEffectiveHeight.toFixed(0)}px`,
+        internalSpriteScale: internalScale.toFixed(2),
+        externalBaseScale: scale,
+        totalScale: (internalScale * scale).toFixed(2)
+      });
+    }
+    
+    // Reposition monster info after scale change
+    this.positionMonsterInfo();
   }
 
   /**

@@ -18,7 +18,7 @@ export const MONSTER_CONFIGS: Record<MonsterType, MonsterConfig> = {
       coins: 5,
       experience: 2,
     },
-    weakTo: [SymbolType.IRON_SWORD, SymbolType.BRONZE_AXE],
+    weakTo: [SymbolType.SYMBOL_1, SymbolType.SYMBOL_2], // Iron Sword, Bronze Axe
     resistantTo: [],
   },
   
@@ -35,8 +35,8 @@ export const MONSTER_CONFIGS: Record<MonsterType, MonsterConfig> = {
       coins: 10,
       experience: 5,
     },
-    weakTo: [SymbolType.BRONZE_AXE, SymbolType.SILVER_SWORD],
-    resistantTo: [SymbolType.IRON_SWORD],
+    weakTo: [SymbolType.SYMBOL_2, SymbolType.SYMBOL_3], // Bronze Axe, Silver Sword
+    resistantTo: [SymbolType.SYMBOL_1], // Iron Sword
   },
   
   [MonsterType.MUMMY]: {
@@ -52,8 +52,8 @@ export const MONSTER_CONFIGS: Record<MonsterType, MonsterConfig> = {
       coins: 15,
       experience: 8,
     },
-    weakTo: [SymbolType.SILVER_SWORD, SymbolType.IRON_AXE],
-    resistantTo: [SymbolType.IRON_SWORD, SymbolType.BRONZE_AXE],
+    weakTo: [SymbolType.SYMBOL_3, SymbolType.SYMBOL_4], // Silver Sword, Iron Axe
+    resistantTo: [SymbolType.SYMBOL_1, SymbolType.SYMBOL_2], // Iron Sword, Bronze Axe
   },
   
   [MonsterType.FIERCE_HELLHOUND]: {
@@ -69,8 +69,8 @@ export const MONSTER_CONFIGS: Record<MonsterType, MonsterConfig> = {
       coins: 25,
       experience: 12,
     },
-    weakTo: [SymbolType.CRUSADER_BLADE, SymbolType.WAR_HAMMER],
-    resistantTo: [SymbolType.IRON_SWORD, SymbolType.BRONZE_AXE, SymbolType.SILVER_SWORD],
+    weakTo: [SymbolType.SYMBOL_5, SymbolType.SYMBOL_6], // Crusader Blade, War Hammer
+    resistantTo: [SymbolType.SYMBOL_1, SymbolType.SYMBOL_2, SymbolType.SYMBOL_3], // Iron Sword, Bronze Axe, Silver Sword
   },
 
   // Legacy monsters for compatibility
@@ -86,7 +86,7 @@ export const MONSTER_CONFIGS: Record<MonsterType, MonsterConfig> = {
       coins: 25,
       experience: 10,
     },
-    weakTo: [SymbolType.IRON_SWORD, SymbolType.BRONZE_AXE],
+    weakTo: [SymbolType.SYMBOL_1, SymbolType.SYMBOL_2], // Iron Sword, Bronze Axe
     resistantTo: [],
   },
   
@@ -102,8 +102,8 @@ export const MONSTER_CONFIGS: Record<MonsterType, MonsterConfig> = {
       coins: 50,
       experience: 25,
     },
-    weakTo: [SymbolType.BRONZE_AXE, SymbolType.SILVER_SWORD],
-    resistantTo: [SymbolType.IRON_SWORD],
+    weakTo: [SymbolType.SYMBOL_2, SymbolType.SYMBOL_3], // Bronze Axe, Silver Sword
+    resistantTo: [SymbolType.SYMBOL_1], // Iron Sword
   },
   
   [MonsterType.TROLL]: {
@@ -118,8 +118,8 @@ export const MONSTER_CONFIGS: Record<MonsterType, MonsterConfig> = {
       coins: 100,
       experience: 50,
     },
-    weakTo: [SymbolType.SILVER_SWORD, SymbolType.IRON_AXE],
-    resistantTo: [SymbolType.IRON_SWORD, SymbolType.BRONZE_AXE],
+    weakTo: [SymbolType.SYMBOL_3, SymbolType.SYMBOL_4], // Silver Sword, Iron Axe
+    resistantTo: [SymbolType.SYMBOL_1, SymbolType.SYMBOL_2], // Iron Sword, Bronze Axe
   },
   
   [MonsterType.DRAGON]: {
@@ -134,8 +134,8 @@ export const MONSTER_CONFIGS: Record<MonsterType, MonsterConfig> = {
       coins: 250,
       experience: 100,
     },
-    weakTo: [SymbolType.CRUSADER_BLADE, SymbolType.WAR_HAMMER],
-    resistantTo: [SymbolType.IRON_SWORD, SymbolType.BRONZE_AXE, SymbolType.SILVER_SWORD],
+    weakTo: [SymbolType.SYMBOL_5, SymbolType.SYMBOL_6], // Crusader Blade, War Hammer
+    resistantTo: [SymbolType.SYMBOL_1, SymbolType.SYMBOL_2, SymbolType.SYMBOL_3], // Iron Sword, Bronze Axe, Silver Sword
   },
   
   [MonsterType.DEMON_LORD]: {
@@ -150,8 +150,8 @@ export const MONSTER_CONFIGS: Record<MonsterType, MonsterConfig> = {
       coins: 500,
       experience: 200,
     },
-    weakTo: [SymbolType.CRUSADER_BLADE, SymbolType.MAGIC_STAFF],
-    resistantTo: [SymbolType.IRON_SWORD, SymbolType.BRONZE_AXE, SymbolType.SILVER_SWORD, SymbolType.IRON_AXE],
+    weakTo: [SymbolType.SYMBOL_5, SymbolType.SYMBOL_7], // Crusader Blade, Magic Staff
+    resistantTo: [SymbolType.SYMBOL_1, SymbolType.SYMBOL_2, SymbolType.SYMBOL_3, SymbolType.SYMBOL_4], // Iron Sword, Bronze Axe, Silver Sword, Iron Axe
   },
 };
 
@@ -162,14 +162,14 @@ export const CRITICAL_HIT_CONFIG: CriticalHitConfig = {
   baseChance: 10, // 10% base critical hit chance
   multiplier: 2.0, // 2x damage on critical hits
   weaponModifiers: {
-    [SymbolType.BROKEN]: -10, // -10% crit chance (never crits)
-    [SymbolType.IRON_SWORD]: 0, // No modifier
-    [SymbolType.BRONZE_AXE]: 2, // +2% crit chance
-    [SymbolType.SILVER_SWORD]: 5, // +5% crit chance
-    [SymbolType.IRON_AXE]: 8, // +8% crit chance
-    [SymbolType.CRUSADER_BLADE]: 15, // +15% crit chance
-    [SymbolType.WAR_HAMMER]: 20, // +20% crit chance
-    [SymbolType.MAGIC_STAFF]: 25, // +25% crit chance (magical weapon)
+    [SymbolType.SYMBOL_0]: -10, // -10% crit chance (broken, never crits)
+    [SymbolType.SYMBOL_1]: 0,   // No modifier (iron sword)
+    [SymbolType.SYMBOL_2]: 2,   // +2% crit chance (bronze axe)
+    [SymbolType.SYMBOL_3]: 5,   // +5% crit chance (silver sword)
+    [SymbolType.SYMBOL_4]: 8,   // +8% crit chance (iron axe)
+    [SymbolType.SYMBOL_5]: 15,  // +15% crit chance (crusader blade)
+    [SymbolType.SYMBOL_6]: 20,  // +20% crit chance (war hammer)
+    [SymbolType.SYMBOL_7]: 25,  // +25% crit chance (magic staff)
   },
 };
 
@@ -200,26 +200,26 @@ export const HP_BAR_CONFIG: HpBarConfig = {
 };
 
 /**
- * Weapon damage values against monsters
- * Note: MAGIC_STAFF has variable damage (6-9), so we use average for base calculations
+ * Weapon damage values against monsters using new symbol_{number} pattern
+ * Note: SYMBOL_7 (Magic Staff) has variable damage (6-9), so we use average for base calculations
  */
 export const WEAPON_DAMAGE: Record<SymbolType, number> = {
-  [SymbolType.BROKEN]: 0, // Broken weapon does no damage
-  [SymbolType.IRON_SWORD]: 1,
-  [SymbolType.BRONZE_AXE]: 2,
-  [SymbolType.SILVER_SWORD]: 3,
-  [SymbolType.IRON_AXE]: 4,
-  [SymbolType.CRUSADER_BLADE]: 5,
-  [SymbolType.WAR_HAMMER]: 6,
-  [SymbolType.MAGIC_STAFF]: 7.5, // Average of 6-9 damage range
+  [SymbolType.SYMBOL_0]: 0,   // 0 damage (broken)
+  [SymbolType.SYMBOL_1]: 1,   // 1 damage (iron sword)
+  [SymbolType.SYMBOL_2]: 2,   // 2 damage (bronze axe)
+  [SymbolType.SYMBOL_3]: 3,   // 3 damage (silver sword)
+  [SymbolType.SYMBOL_4]: 4,   // 4 damage (iron axe)
+  [SymbolType.SYMBOL_5]: 5,   // 5 damage (crusader blade)
+  [SymbolType.SYMBOL_6]: 6,   // 6 damage (war hammer)
+  [SymbolType.SYMBOL_7]: 7.5, // 6-9 damage average (magic staff)
 };
 
 /**
- * Get the actual damage for a weapon (handles variable damage for MAGIC_STAFF)
+ * Get the actual damage for a weapon (handles variable damage for SYMBOL_7)
  */
 export const getWeaponDamage = (weapon: SymbolType): number => {
-  if (weapon === SymbolType.MAGIC_STAFF) {
-    // Random damage between 6-9 for Magic Staff
+  if (weapon === SymbolType.SYMBOL_7) {
+    // Random damage between 6-9 for Magic Staff (SYMBOL_7)
     return Math.floor(Math.random() * 4) + 6; // 6, 7, 8, or 9
   }
   return WEAPON_DAMAGE[weapon] || 0;
@@ -438,6 +438,24 @@ export const MONSTER_SPRITESHEETS = {
       'Wraith_02_Attack_009.png',
       'Wraith_02_Attack_010.png',
       'Wraith_02_Attack_011.png',
+    ]
+  },
+  [MonsterType.FIERCE_HELLHOUND]: {
+    name: 'hellhound_spritesheet',
+    url: 'src/assets/spritesheets/hellhound.json',
+    type: 'spritesheet' as const,
+    defaultFrame: 'Troll_01_1_ATTACK_000.png', // Use first frame as default
+    animationFrames: [
+      'Troll_01_1_ATTACK_000.png',
+      'Troll_01_1_ATTACK_001.png',
+      'Troll_01_1_ATTACK_002.png',
+      'Troll_01_1_ATTACK_003.png',
+      'Troll_01_1_ATTACK_004.png',
+      'Troll_01_1_ATTACK_005.png',
+      'Troll_01_1_ATTACK_006.png',
+      'Troll_01_1_ATTACK_007.png',
+      'Troll_01_1_ATTACK_008.png',
+      'Troll_01_1_ATTACK_009.png',
     ]
   }
 } as const;

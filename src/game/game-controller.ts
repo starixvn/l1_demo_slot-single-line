@@ -413,9 +413,9 @@ export class GameController extends Container {
     
     // Set all reels to the same high-value symbol for testing
     const testSymbols: SymbolType[] = [
-      SymbolType.CRUSADER_BLADE,
-      SymbolType.CRUSADER_BLADE,
-      SymbolType.CRUSADER_BLADE,
+      SymbolType.SYMBOL_5, // Crusader Blade
+      SymbolType.SYMBOL_5, // Crusader Blade
+      SymbolType.SYMBOL_5, // Crusader Blade
     ];
     
     this.combatSystem.getSlotMachine().setSymbols(testSymbols);
