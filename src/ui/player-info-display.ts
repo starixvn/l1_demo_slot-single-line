@@ -9,6 +9,7 @@ export class PlayerInfoDisplay extends Container {
   private betText!: Text;
   private winText!: Text;
   private totalWinText!: Text;
+  private respinText!: Text;
   private background!: Graphics;
 
   private currentBalance: number = 1000;
@@ -16,9 +17,10 @@ export class PlayerInfoDisplay extends Container {
   private currentWin: number = 0;
   private totalWins: number = 0;
   private lastWinAmount: number = 0;
+  private respinCount: number = 0;
 
   // Display configuration
-  private readonly PANEL_WIDTH = 600;
+  private readonly PANEL_WIDTH = 750; // Increased from 600 to accommodate 5 sections
   private readonly PANEL_HEIGHT = 100; // Increased from 80px to 100px to accommodate larger text
 
   constructor() {
@@ -62,8 +64,8 @@ export class PlayerInfoDisplay extends Container {
       align: 'center',
     });
 
-    // Calculate positions for 4 sections
-    const sectionWidth = this.PANEL_WIDTH / 4;
+    // Calculate positions for 5 sections
+    const sectionWidth = this.PANEL_WIDTH / 5;
     
     // Balance section
     const balanceLabel = new Text('BALANCE', labelStyle);
@@ -116,6 +118,19 @@ export class PlayerInfoDisplay extends Container {
     this.totalWinText.x = sectionWidth * 3.5;
     this.totalWinText.y = 50; // Adjusted from 35 to 50 for larger text and better spacing
     this.addChild(this.totalWinText);
+
+    // Respins section
+    const respinLabel = new Text('RESPINS', labelStyle);
+    respinLabel.anchor.set(0.5, 0);
+    respinLabel.x = sectionWidth * 4.5;
+    respinLabel.y = 15; // Adjusted from 10 to 15 for better centering in taller panel
+    this.addChild(respinLabel);
+
+    this.respinText = new Text('0', valueStyle);
+    this.respinText.anchor.set(0.5, 0);
+    this.respinText.x = sectionWidth * 4.5;
+    this.respinText.y = 50; // Adjusted from 35 to 50 for larger text and better spacing
+    this.addChild(this.respinText);
   }
 
   /**
@@ -131,8 +146,8 @@ export class PlayerInfoDisplay extends Container {
     
     // Add dividers between sections
     this.background.lineStyle(1, 0x444444, 0.7);
-    const sectionWidth = this.PANEL_WIDTH / 4;
-    for (let i = 1; i < 4; i++) {
+    const sectionWidth = this.PANEL_WIDTH / 5;
+    for (let i = 1; i < 5; i++) {
       const x = sectionWidth * i;
       this.background.moveTo(x, 10);
       this.background.lineTo(x, this.PANEL_HEIGHT - 10);
@@ -232,6 +247,7 @@ export class PlayerInfoDisplay extends Container {
     this.updateBalance(this.currentBalance);
     this.updateBet(this.currentBet);
     this.updateWin(this.currentWin);
+    this.updateRespinCount(this.respinCount);
   }
 
   /**
@@ -239,6 +255,23 @@ export class PlayerInfoDisplay extends Container {
    */
   public resetWin(): void {
     this.updateWin(0);
+  }
+
+  /**
+   * Update respin count display
+   */
+  public updateRespinCount(count: number): void {
+    this.respinCount = Math.max(0, count);
+    this.respinText.text = this.respinCount.toString();
+    
+    // Change color based on respin activity
+    if (this.respinCount > 0) {
+      this.respinText.style.fill = 0x00FFFF; // Cyan for active respins
+    } else {
+      this.respinText.style.fill = 0xFFD700; // Gold for no respins
+    }
+    
+    console.log(`PlayerInfoDisplay: Respin count updated to ${this.respinCount}`);
   }
 
   /**
@@ -267,6 +300,13 @@ export class PlayerInfoDisplay extends Container {
    */
   public getTotalWins(): number {
     return this.totalWins;
+  }
+
+  /**
+   * Get current respin count
+   */
+  public getRespinCount(): number {
+    return this.respinCount;
   }
 
   /**

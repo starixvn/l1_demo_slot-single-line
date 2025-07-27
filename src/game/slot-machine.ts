@@ -21,10 +21,10 @@ interface AreaLayoutConfig {
 export class SlotMachine extends Container {
   private reels: Reel[] = [];
   private isSpinning: boolean = false;
-  private resultText!: Text;
   private respinText!: Text;
   private balance: number = 1000; // Starting balance
   private respinManager: RespinManager;
+  private lastSpinResult?: SpinResult; // Store last result for status display
 
   // Layout configuration
   private areaConfig: AreaLayoutConfig = {
@@ -78,40 +78,21 @@ export class SlotMachine extends Container {
       reel.y = reelAreaY;
     });
     
-    // Position text elements below reels - all centered horizontally
+    // Position respin text below reels - centered horizontally
     const textAreaY = reelAreaY + reelAreaHeight + 20;
     
-    // All text elements centered on centerX for perfect horizontal alignment
-    this.resultText.x = centerX;
-    this.resultText.y = textAreaY;
-    
     this.respinText.x = centerX;
-    this.respinText.y = textAreaY + 30; // Moved up since balance text is removed
+    this.respinText.y = textAreaY;
   }
 
   /**
    * Set up the slot machine layout and components
    */
   private setupSlotMachine(): void {
-    // Title removed to save space for monster trails
-    
     // Create reels
     this.createReels();
     
-    // Create result display
-    const resultStyle = new TextStyle({
-      fontFamily: 'Arial, sans-serif',
-      fontSize: GAME_CONSTANTS.FONT_SIZES.MEDIUM, // Medium text for results
-      fontWeight: 'bold',
-      fill: 0xFFFFFF,
-      align: 'center',
-    });
-    
-    this.resultText = new Text('Click SPIN to start!', resultStyle);
-    this.resultText.anchor.set(0.5, 0);
-    this.addChild(this.resultText);
-    
-    // Create respin display (balance removed - shown in player info panel)
+    // Create respin display only (result text removed - moved to status display)
     const respinStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
       fontSize: GAME_CONSTANTS.FONT_SIZES.SMALL, // Small text for respin info
@@ -167,8 +148,6 @@ export class SlotMachine extends Container {
     if (!isRespin) {
       if (this.balance < SLOT_CONFIG.BET_AMOUNT) {
         console.warn('SlotMachine: Insufficient balance');
-        this.resultText.text = 'Insufficient balance!';
-        this.resultText.style.fill = 0xFF0000;
         return this.createNoSpinResult();
       }
       
@@ -179,8 +158,6 @@ export class SlotMachine extends Container {
     this.updateDisplay();
     
     this.isSpinning = true;
-    this.resultText.text = isRespin ? 'Respinning...' : 'Spinning...';
-    this.resultText.style.fill = isRespin ? 0x00FFFF : 0xFFFFFF;
     
     console.log(`SlotMachine: Starting ${isRespin ? 'respin' : 'spin'}`);
     
@@ -194,7 +171,8 @@ export class SlotMachine extends Container {
       // Start spinning all reels
       this.reels.forEach(reel => reel.spin());
       
-      // Wait for initial spin-up time
+      // Wait for initial spin-up time (800ms allows reels to reach full speed)
+      // This creates realistic slot machine behavior where reels accelerate before stopping
       await new Promise(resolve => setTimeout(resolve, 800));
       
       // Calculate stagger delays for visual effect
@@ -250,11 +228,14 @@ export class SlotMachine extends Container {
     // Calculate win result
     const spinResult = this.calculateWinResult(reelResults);
     
+    // Store result for status display
+    this.lastSpinResult = spinResult;
+    
     // Update balance with payout (always add payouts regardless of spin type)
     this.balance += spinResult.payout;
     
-    // Display result
-    this.displayResult(spinResult);
+    // Update reel highlights for wins
+    this.updateReelHighlights(spinResult);
     this.updateDisplay();
     
     console.log(`SlotMachine: ${isRespin ? 'Respin' : 'Spin'} complete`, spinResult);
@@ -310,9 +291,12 @@ export class SlotMachine extends Container {
   }
   
   /**
-   * Display the spin result
+   * Format spin result for debug display
    */
-  private displayResult(result: SpinResult): void {
+  public formatSpinResult(): string {
+    if (!this.lastSpinResult) return '';
+    
+    const result = this.lastSpinResult;
     if (result.isWin) {
       const symbolNames = result.winningSymbols?.map(s => SYMBOL_CONFIGS[s].name).join(', ') || '';
       
@@ -325,21 +309,9 @@ export class SlotMachine extends Container {
           message = '🎊 YOU WIN! 🎊';
       }
       
-      this.resultText.text = `${message}\nPayout: ${result.payout} coins`;
-      this.resultText.style.fill = 0x00FF00;
-      
-      // Highlight winning reels
-      this.reels.forEach(reel => {
-        const isWinningReel = result.winningSymbols?.includes(reel.getCurrentSymbol()) || false;
-        reel.highlight(isWinningReel);
-      });
-      
+      return `${message}\nPayout: ${result.payout} coins`;
     } else {
-      this.resultText.text = 'Try again!';
-      this.resultText.style.fill = 0xFF6B6B;
-      
-      // Reset all reel highlights
-      this.reels.forEach(reel => reel.highlight(false));
+      return 'Try again!';
     }
   }
   
@@ -374,6 +346,29 @@ export class SlotMachine extends Container {
       winType: WinType.NO_WIN,
       payout: 0,
     };
+  }
+  
+  /**
+   * Update reel highlights based on win result
+   */
+  private updateReelHighlights(result: SpinResult): void {
+    if (result.isWin) {
+      // Highlight winning reels
+      this.reels.forEach(reel => {
+        const isWinningReel = result.winningSymbols?.includes(reel.getCurrentSymbol()) || false;
+        reel.highlight(isWinningReel);
+      });
+    } else {
+      // Reset all reel highlights
+      this.reels.forEach(reel => reel.highlight(false));
+    }
+  }
+
+  /**
+   * Get last spin result for status display
+   */
+  public getLastSpinResult(): SpinResult | undefined {
+    return this.lastSpinResult;
   }
   
   /**

@@ -297,7 +297,14 @@ export class GameController extends Container {
    */
   private updateStatusDisplay(): void {
     const stats = this.gameLoopManager.getGameStats();
-    this.statusText.text = `Status:\n${stats}`;
+    const spinResult = this.combatSystem.getSlotMachine().formatSpinResult();
+    
+    let statusContent = `Status:\n${stats}`;
+    if (spinResult) {
+      statusContent += `\n\nLast Result:\n${spinResult}`;
+    }
+    
+    this.statusText.text = statusContent;
   }
 
   /**
@@ -492,6 +499,9 @@ export class GameController extends Container {
       this.playerInfoDisplay.updateBet(10); // Default bet amount
     }
     
+    // Update respin count from game state
+    this.playerInfoDisplay.updateRespinCount(gameState.totalRespins);
+    
     // Calculate total win from spin result and combat rewards
     let totalWin = spinResult.payout || 0;
     if (combatResults && combatResults.length > 0) {
@@ -505,7 +515,7 @@ export class GameController extends Container {
       this.playerInfoDisplay.updateWin(totalWin);
     }
     
-    console.log(`GameController: Updated player info - Balance: ${gameState.balance}, Win: ${totalWin}`);
+    console.log(`GameController: Updated player info - Balance: ${gameState.balance}, Win: ${totalWin}, Respins: ${gameState.totalRespins}`);
   }
   
   /**
