@@ -3,6 +3,7 @@ import { MonsterType, MonsterState, CombatResult } from '@/types/monster-types';
 import { SymbolType } from '@/types/slot-types';
 import { MONSTER_CONFIGS, HP_BAR_CONFIG, CombatCalculator, generateMonsterHp } from '@/config/monster-config';
 import { getMonsterTextureEnhanced, hasMonsterSpritesheet, getMonsterAnimationFrames } from '@/systems/asset-manager';
+import { GAME_CONSTANTS } from '@/config/game-config';
 
 /**
  * Individual monster class with HP management and visual display
@@ -65,7 +66,7 @@ export class Monster extends Container {
     // Create name text
     const nameStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 16, // Slightly larger for better readability
+      fontSize: GAME_CONSTANTS.FONT_SIZES.SMALL, // Small text for monster names
       fontWeight: 'bold',
       fill: 0xFFFFFF,
       align: 'center',

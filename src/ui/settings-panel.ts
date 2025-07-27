@@ -1,4 +1,5 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
+import { GAME_CONSTANTS } from '@/config/game-config';
 
 /**
  * Interface for settings configuration
@@ -77,7 +78,7 @@ export class SettingsPanel extends Container {
     // Add gear text
     const gearText = new Text('⚙️', new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 24,
+      fontSize: GAME_CONSTANTS.FONT_SIZES.LARGE,
       fill: 0xFFFFFF,
       align: 'center',
     }));
@@ -200,7 +201,7 @@ export class SettingsPanel extends Container {
     // Title
     const title = new Text('⚙️ GAME SETTINGS', new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 24,
+      fontSize: GAME_CONSTANTS.FONT_SIZES.LARGE,
       fontWeight: 'bold',
       fill: 0xFFFFFF,
       align: 'center',
@@ -209,17 +210,17 @@ export class SettingsPanel extends Container {
     title.y = -this.POPUP_HEIGHT / 2 + 30;
     this.settingsPopup.addChild(title);
     
-    // Settings options
+    // Settings options - Standardized font hierarchy
     const optionStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 18,
+      fontSize: GAME_CONSTANTS.FONT_SIZES.MEDIUM, // Medium text for option labels
       fill: 0xFFFFFF,
       align: 'left',
     });
     
     const valueStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 18,
+      fontSize: GAME_CONSTANTS.FONT_SIZES.MEDIUM, // Medium text for option values
       fontWeight: 'bold',
       fill: 0x00FF00,
       align: 'right',
@@ -263,7 +264,7 @@ export class SettingsPanel extends Container {
     const infoY = 60;
     const infoStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 14,
+      fontSize: GAME_CONSTANTS.FONT_SIZES.SMALL, // Small text for info
       fill: 0xAAAAAA,
       align: 'center',
     });
@@ -297,7 +298,7 @@ export class SettingsPanel extends Container {
     // Close button text
     const closeText = new Text('✕', new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 16,
+      fontSize: GAME_CONSTANTS.FONT_SIZES.MEDIUM, // Medium text for close button
       fontWeight: 'bold',
       fill: 0xFFFFFF,
       align: 'center',

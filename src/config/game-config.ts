@@ -33,6 +33,13 @@ export const GAME_CONSTANTS = {
     OVERLAY: 30,
     DEBUG: 100,
   },
+  
+  // Typography - Standardized font sizes
+  FONT_SIZES: {
+    SMALL: 16,   // Status, info, secondary text
+    MEDIUM: 20,  // Labels, standard UI text
+    LARGE: 24,   // Main values, buttons, titles
+  },
 } as const;
 
 /**

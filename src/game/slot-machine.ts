@@ -3,6 +3,7 @@ import { Reel } from './reel';
 import { SymbolType, SpinResult, ReelResult, WinType, RespinInfo } from '@/types/slot-types';
 import { SymbolGenerator, SYMBOL_CONFIGS, SLOT_CONFIG } from '@/config/symbol-config';
 import { RespinManager } from '@/systems/respin-manager';
+import { GAME_CONSTANTS } from '@/config/game-config';
 
 /**
  * Area layout configuration for responsive positioning
@@ -100,7 +101,7 @@ export class SlotMachine extends Container {
     // Create result display
     const resultStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 20, // Adjusted size for responsive layout
+      fontSize: GAME_CONSTANTS.FONT_SIZES.MEDIUM, // Medium text for results
       fontWeight: 'bold',
       fill: 0xFFFFFF,
       align: 'center',
@@ -113,7 +114,7 @@ export class SlotMachine extends Container {
     // Create respin display (balance removed - shown in player info panel)
     const respinStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 14, // Adjusted size
+      fontSize: GAME_CONSTANTS.FONT_SIZES.SMALL, // Small text for respin info
       fill: 0x00FFFF,
       align: 'center',
     });

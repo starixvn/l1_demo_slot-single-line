@@ -4,6 +4,7 @@ import { SymbolType, GameState } from '@/types/slot-types';
 import { GameLoopManager } from '@/systems/game-loop-manager';
 import { PlayerInfoDisplay } from '@/ui/player-info-display';
 import { SettingsPanel } from '@/ui/settings-panel';
+import { GAME_CONSTANTS } from '@/config/game-config';
 
 /**
  * Game controller that manages user interactions and game flow with new responsive layout
@@ -22,7 +23,7 @@ export class GameController extends Container {
   // Layout configuration based on canvas dimensions
   private canvasWidth: number = 1920;
   private canvasHeight: number = 1080;
-  private readonly MONSTER_AREA_HEIGHT_RATIO = 0.30;
+  private readonly MONSTER_AREA_HEIGHT_RATIO = 0.267; // 288px / 1080px for more compact monster display
   private readonly WEAPON_AREA_HEIGHT_RATIO = 0.40;
   private readonly UI_PADDING = 20;
 
@@ -165,7 +166,7 @@ export class GameController extends Container {
   private createStatusDisplay(): void {
     const statusStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 12, // Smaller font for status
+      fontSize: GAME_CONSTANTS.FONT_SIZES.SMALL, // Small text for status
       fill: 0xAAAAAA,
       align: 'left',
     });
@@ -289,17 +290,17 @@ export class GameController extends Container {
     // Button background
     const bg = new Graphics();
     bg.beginFill(color, 0.8);
-    bg.drawRoundedRect(-75, -25, 150, 50, 10);
+    bg.drawRoundedRect(-85, -30, 170, 60, 12);
     bg.endFill();
     
     // Button border
     bg.lineStyle(2, 0xFFFFFF, 1);
-    bg.drawRoundedRect(-75, -25, 150, 50, 10);
+    bg.drawRoundedRect(-85, -30, 170, 60, 12);
     
     // Button text
     const textStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 16,
+      fontSize: GAME_CONSTANTS.FONT_SIZES.LARGE, // Large text for primary buttons
       fontWeight: 'bold',
       fill: 0xFFFFFF,
       align: 'center',
@@ -315,19 +316,19 @@ export class GameController extends Container {
     button.on('pointerover', () => {
       bg.clear();
       bg.beginFill(color, 1.0);
-      bg.drawRoundedRect(-75, -25, 150, 50, 10);
+      bg.drawRoundedRect(-85, -30, 170, 60, 12);
       bg.endFill();
       bg.lineStyle(3, 0xFFD700, 1);
-      bg.drawRoundedRect(-75, -25, 150, 50, 10);
+      bg.drawRoundedRect(-85, -30, 170, 60, 12);
     });
     
     button.on('pointerout', () => {
       bg.clear();
       bg.beginFill(color, 0.8);
-      bg.drawRoundedRect(-75, -25, 150, 50, 10);
+      bg.drawRoundedRect(-85, -30, 170, 60, 12);
       bg.endFill();
       bg.lineStyle(2, 0xFFFFFF, 1);
-      bg.drawRoundedRect(-75, -25, 150, 50, 10);
+      bg.drawRoundedRect(-85, -30, 170, 60, 12);
     });
     
     return button;

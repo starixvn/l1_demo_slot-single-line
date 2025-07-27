@@ -191,7 +191,7 @@ export const MONSTER_TRAIL_CONFIG: MonsterTrailConfig = {
  */
 export const HP_BAR_CONFIG: HpBarConfig = {
   width: 150,
-  height: 12,
+  height: 6, // Reduced from 12px to 6px for more compact display
   backgroundColor: 0x333333,
   healthColor: 0x00FF00,
   criticalColor: 0xFF0000,

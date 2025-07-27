@@ -1,4 +1,5 @@
 import { Container, Text, TextStyle, Graphics } from 'pixi.js';
+import { GAME_CONSTANTS } from '@/config/game-config';
 
 /**
  * Player information display showing balance, bet, and win amounts
@@ -18,7 +19,7 @@ export class PlayerInfoDisplay extends Container {
 
   // Display configuration
   private readonly PANEL_WIDTH = 600;
-  private readonly PANEL_HEIGHT = 80;
+  private readonly PANEL_HEIGHT = 100; // Increased from 80px to 100px to accommodate larger text
 
   constructor() {
     super();
@@ -36,10 +37,10 @@ export class PlayerInfoDisplay extends Container {
     // Create background panel
     this.createBackground();
     
-    // Create text styles
+    // Create text styles - Standardized font hierarchy
     const labelStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 16,
+      fontSize: GAME_CONSTANTS.FONT_SIZES.MEDIUM, // Medium text for labels
       fontWeight: 'bold',
       fill: 0xFFFFFF,
       align: 'center',
@@ -47,7 +48,7 @@ export class PlayerInfoDisplay extends Container {
 
     const valueStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 20,
+      fontSize: GAME_CONSTANTS.FONT_SIZES.LARGE, // Large text for main values
       fontWeight: 'bold',
       fill: 0xFFD700,
       align: 'center',
@@ -55,7 +56,7 @@ export class PlayerInfoDisplay extends Container {
 
     const winStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 18,
+      fontSize: GAME_CONSTANTS.FONT_SIZES.LARGE, // Large text for win amounts (same as values)
       fontWeight: 'bold',
       fill: 0x00FF00,
       align: 'center',
@@ -68,52 +69,52 @@ export class PlayerInfoDisplay extends Container {
     const balanceLabel = new Text('BALANCE', labelStyle);
     balanceLabel.anchor.set(0.5, 0);
     balanceLabel.x = sectionWidth * 0.5;
-    balanceLabel.y = 10;
+    balanceLabel.y = 15; // Adjusted from 10 to 15 for better centering in taller panel
     this.addChild(balanceLabel);
 
     this.balanceText = new Text('1000', valueStyle);
     this.balanceText.anchor.set(0.5, 0);
     this.balanceText.x = sectionWidth * 0.5;
-    this.balanceText.y = 35;
+    this.balanceText.y = 50; // Adjusted from 35 to 50 for larger text and better spacing
     this.addChild(this.balanceText);
 
     // Bet section
     const betLabel = new Text('BET', labelStyle);
     betLabel.anchor.set(0.5, 0);
     betLabel.x = sectionWidth * 1.5;
-    betLabel.y = 10;
+    betLabel.y = 15; // Adjusted from 10 to 15 for better centering in taller panel
     this.addChild(betLabel);
 
     this.betText = new Text('10', valueStyle);
     this.betText.anchor.set(0.5, 0);
     this.betText.x = sectionWidth * 1.5;
-    this.betText.y = 35;
+    this.betText.y = 50; // Adjusted from 35 to 50 for larger text and better spacing
     this.addChild(this.betText);
 
     // Last Win section
     const winLabel = new Text('LAST WIN', labelStyle);
     winLabel.anchor.set(0.5, 0);
     winLabel.x = sectionWidth * 2.5;
-    winLabel.y = 10;
+    winLabel.y = 15; // Adjusted from 10 to 15 for better centering in taller panel
     this.addChild(winLabel);
 
     this.winText = new Text('0', winStyle);
     this.winText.anchor.set(0.5, 0);
     this.winText.x = sectionWidth * 2.5;
-    this.winText.y = 35;
+    this.winText.y = 50; // Adjusted from 35 to 50 for larger text and better spacing
     this.addChild(this.winText);
 
     // Total Wins section
     const totalWinLabel = new Text('TOTAL WINS', labelStyle);
     totalWinLabel.anchor.set(0.5, 0);
     totalWinLabel.x = sectionWidth * 3.5;
-    totalWinLabel.y = 10;
+    totalWinLabel.y = 15; // Adjusted from 10 to 15 for better centering in taller panel
     this.addChild(totalWinLabel);
 
     this.totalWinText = new Text('0', winStyle);
     this.totalWinText.anchor.set(0.5, 0);
     this.totalWinText.x = sectionWidth * 3.5;
-    this.totalWinText.y = 35;
+    this.totalWinText.y = 50; // Adjusted from 35 to 50 for larger text and better spacing
     this.addChild(this.totalWinText);
   }
 

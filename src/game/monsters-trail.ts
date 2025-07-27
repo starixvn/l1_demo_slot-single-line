@@ -3,6 +3,7 @@ import { Monster } from './monster';
 import { MonsterType, CombatResult } from '@/types/monster-types';
 import { SymbolType } from '@/types/slot-types';
 import { MonsterGenerator } from '@/config/monster-config';
+import { GAME_CONSTANTS } from '@/config/game-config';
 
 /**
  * Area layout configuration for responsive positioning
@@ -32,7 +33,7 @@ export class MonstersTrail extends Container {
 
   // Layout configuration
   private areaConfig: AreaLayoutConfig = {
-    areaHeight: 324, // Default 30% of 1080
+    areaHeight: 288, // Reduced from 324px (30% of 1080) to 288px for more compact display
     areaWidth: 1536, // Default 80% of 1920
     centerX: 0,
     topY: 0
@@ -68,23 +69,23 @@ export class MonstersTrail extends Container {
     this.progressText.x = centerX;
     this.progressText.y = topY + 50;
     
-    // Calculate monster positions - adjusted for larger sprites
-    const monsterAreaCenterY = topY + areaHeight * 0.55; // Slightly higher for larger monsters
+    // Calculate monster positions - optimized for more compact display
+    const monsterAreaCenterY = topY + areaHeight * 0.55; // Slightly higher for optimal positioning
     const currentMonsterX = centerX; // Center for current monster
-    const nextMonsterX = centerX - areaWidth * 0.4; // Increased spacing for larger sprites
+    const nextMonsterX = centerX - 300; // Fixed 300px spacing for better layout
     
-    // Position current monster (large, center)
+    // Position current monster (center, 280x280px effective size)
     if (this.currentMonster) {
       this.currentMonster.x = currentMonsterX;
       this.currentMonster.y = monsterAreaCenterY;
-      this.currentMonster.setBaseScale(2.2); // Slightly increased scale for prominence
+      this.currentMonster.setBaseScale(1.4); // 200px * 1.4 = 280px display size
     }
     
-    // Position next monster (smaller, left side)
+    // Position next monster (left side, 160x160px effective size)
     if (this.nextMonster) {
       this.nextMonster.x = nextMonsterX;
       this.nextMonster.y = monsterAreaCenterY;
-      this.nextMonster.setBaseScale(1.4); // Proportionally increased scale
+      this.nextMonster.setBaseScale(0.8); // 200px * 0.8 = 160px display size
       this.nextMonster.alpha = 0.7; // Slightly transparent to indicate it's upcoming
     }
   }
@@ -96,7 +97,7 @@ export class MonstersTrail extends Container {
     // Create title
     const titleStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 24,
+      fontSize: GAME_CONSTANTS.FONT_SIZES.LARGE,
       fontWeight: 'bold',
       fill: 0xFFFFFF,
       align: 'center',
@@ -109,7 +110,7 @@ export class MonstersTrail extends Container {
     // Create progress text
     const progressStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 16,
+      fontSize: GAME_CONSTANTS.FONT_SIZES.SMALL,
       fill: 0xFFD700,
       align: 'center',
     });
@@ -129,7 +130,7 @@ export class MonstersTrail extends Container {
     const currentMonsterType = this.sequentialMonsters[this.currentSequentialIndex];
     this.currentMonster = new Monster(currentMonsterType, 0, 0);
     this.currentMonster.setActive(true);
-    this.currentMonster.setBaseScale(2.2); // Set initial scale for prominence
+    this.currentMonster.setBaseScale(1.4); // Set initial scale for compact display (280px effective size)
     this.addChild(this.currentMonster);
     
     // Create the next monster (preview)
@@ -171,7 +172,7 @@ export class MonstersTrail extends Container {
     if (this.nextMonster) {
       this.currentMonster = this.nextMonster;
       this.currentMonster.setActive(true);
-      this.currentMonster.setBaseScale(2.2); // Match the scale for current monster prominence
+      this.currentMonster.setBaseScale(1.4); // Match the scale for current monster compact display (280px effective size)
       this.currentMonster.alpha = 1.0;
     }
     

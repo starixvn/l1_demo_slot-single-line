@@ -1,5 +1,6 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { EffectType, EffectConfig } from '@/types/monster-types';
+import { GAME_CONSTANTS } from '@/config/game-config';
 
 /**
  * Visual effects system for combat feedback
@@ -104,7 +105,7 @@ export class CriticalHitEffects extends Container {
     
     const textStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: 24,
+      fontSize: GAME_CONSTANTS.FONT_SIZES.LARGE,
       fontWeight: 'bold',
       fill: config.color,
       align: 'center',
