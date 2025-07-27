@@ -6,6 +6,8 @@ import { SymbolType, SpinResult, GameState } from '@/types/slot-types';
 import { CombatResult } from '@/types/monster-types';
 import { MonsterGenerator } from '@/config/monster-config';
 import { GameLoopManager } from '@/systems/game-loop-manager';
+import { PlayerProgressionManager } from '@/config/level-config';
+import { SymbolGenerator } from '@/config/symbol-config';
 
 /**
  * Layout configuration for responsive positioning
@@ -220,13 +222,46 @@ export class CombatSystem extends Container {
     const attackResults = this.monstersTrail.attackMonster(weaponSymbols);
     combatResults.push(...attackResults);
     
-    // Show visual effects for each attack
+    // Process XP rewards for defeated monsters
+    const progressionManager = PlayerProgressionManager.getInstance();
+    let totalXpEarned = 0;
+    
     for (const result of attackResults) {
+      // Award XP for defeated monsters
+      if (result.monsterDefeated && result.rewards?.experience) {
+        const xpEarned = result.rewards.experience;
+        totalXpEarned += xpEarned;
+        
+        const levelUpResult = progressionManager.addXp(xpEarned);
+        
+        console.log(`💫 Earned ${xpEarned} XP for defeating monster!`);
+        
+        if (levelUpResult.leveledUp) {
+          console.log(`🎉 LEVEL UP! Reached Level ${levelUpResult.newLevel}!`);
+          console.log(`🔓 New symbols unlocked:`, levelUpResult.newSymbols);
+          
+          // Refresh symbol pool with newly unlocked symbols
+          SymbolGenerator.refreshSymbolPool();
+          
+          // Show level up effects
+          await this.showLevelUpEffects(levelUpResult.newLevel!, levelUpResult.newSymbols!);
+        }
+      }
+      
+      // Show visual effects for each attack
       await this.showCombatEffects(result);
       
       // Small delay between attacks for visual appeal
       if (attackResults.length > 1) {
         await new Promise(resolve => setTimeout(resolve, 300));
+      }
+    }
+    
+    // Show total XP earned if any
+    if (totalXpEarned > 0) {
+      const currentMonster = this.monstersTrail.getCurrentMonster();
+      if (currentMonster) {
+        this.effects.showXpGain(totalXpEarned, currentMonster.x, currentMonster.y - 100);
       }
     }
     
@@ -243,6 +278,18 @@ export class CombatSystem extends Container {
         // Apply bonus attack multiplier
         bonusResult.damage = Math.round(bonusResult.damage * 1.5);
         bonusResult.isCritical = true; // Bonus attacks are always critical
+        
+        // Award bonus XP for bonus attacks
+        if (bonusResult.monsterDefeated && bonusResult.rewards?.experience) {
+          const bonusXp = Math.round(bonusResult.rewards.experience * 0.5); // 50% bonus XP
+          const levelUpResult = progressionManager.addXp(bonusXp);
+          console.log(`⭐ Bonus XP: ${bonusXp} for three-of-a-kind finish!`);
+          
+          if (levelUpResult.leveledUp) {
+            SymbolGenerator.refreshSymbolPool();
+            await this.showLevelUpEffects(levelUpResult.newLevel!, levelUpResult.newSymbols!);
+          }
+        }
         
         combatResults.push(bonusResult);
         await this.showCombatEffects(bonusResult, true);
@@ -286,20 +333,29 @@ export class CombatSystem extends Container {
     // Wait for effects to be visible
     await new Promise(resolve => setTimeout(resolve, 200));
   }
+
+  /**
+   * Show level up effects and notifications
+   */
+  private async showLevelUpEffects(newLevel: number, newSymbols: SymbolType[]): Promise<void> {
+    // Show level up effect at center of screen
+    this.effects.showLevelUp(newLevel, 0, -200);
+    
+    // Show new symbols unlocked effect
+    if (newSymbols.length > 0) {
+      this.effects.showNewSymbolsUnlocked(newSymbols, 0, -100);
+    }
+    
+    // Wait for level up effects to complete
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
   
   /**
-   * Check if a symbol is a weapon (anything other than SYMBOL_0/broken)
+   * Check if a symbol is a weapon (any symbol with damage value > 0)
    */
   private isWeaponSymbol(symbol: SymbolType): boolean {
-    return [
-      SymbolType.SYMBOL_1, // Iron Sword
-      SymbolType.SYMBOL_2, // Bronze Axe
-      SymbolType.SYMBOL_3, // Silver Sword
-      SymbolType.SYMBOL_4, // Iron Axe
-      SymbolType.SYMBOL_5, // Crusader Blade
-      SymbolType.SYMBOL_6, // War Hammer
-      SymbolType.SYMBOL_7, // Magic Staff
-    ].includes(symbol);
+    const symbolConfig = SymbolGenerator.getSymbolConfig(symbol);
+    return symbolConfig && symbolConfig.value > 0;
   }
   
   /**

@@ -1,5 +1,7 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { EffectType, EffectConfig } from '@/types/monster-types';
+import { SymbolType } from '@/types/slot-types';
+import { SYMBOL_CONFIGS } from '@/config/symbol-config';
 import { GAME_CONSTANTS } from '@/config/game-config';
 
 /**
@@ -93,6 +95,56 @@ export class CriticalHitEffects extends Container {
     
     this.addEffect(effect);
     this.animateDamageNumber(effect);
+  }
+
+  /**
+   * Display XP gain effect
+   */
+  showXpGain(xpAmount: number, x: number, y: number): void {
+    const effect = this.createTextEffect({
+      type: EffectType.CRITICAL_HIT, // Reuse type
+      duration: 1500,
+      color: 0x9932CC, // Purple for XP
+      scale: 1.4,
+      text: `+${xpAmount} XP`,
+    }, x, y);
+    
+    this.addEffect(effect);
+    this.animateXpGain(effect);
+  }
+
+  /**
+   * Display level up effect
+   */
+  showLevelUp(newLevel: number, x: number, y: number): void {
+    const effect = this.createTextEffect({
+      type: EffectType.CRITICAL_HIT, // Reuse type
+      duration: 3000,
+      color: 0xFFD700, // Gold for level up
+      scale: 2.5,
+      text: `🎉 LEVEL ${newLevel}! 🎉`,
+    }, x, y);
+    
+    this.addEffect(effect);
+    this.animateLevelUp(effect);
+  }
+
+  /**
+   * Display new symbols unlocked effect
+   */
+  showNewSymbolsUnlocked(newSymbols: SymbolType[], x: number, y: number): void {
+    const symbolNames = newSymbols.map(symbol => SYMBOL_CONFIGS[symbol].name).join(', ');
+    
+    const effect = this.createTextEffect({
+      type: EffectType.CRITICAL_HIT, // Reuse type
+      duration: 2500,
+      color: 0x00FFFF, // Cyan for new unlocks
+      scale: 1.3,
+      text: `🔓 New Weapons: ${symbolNames}`,
+    }, x, y);
+    
+    this.addEffect(effect);
+    this.animateNewSymbolsUnlocked(effect);
   }
   
   /**
@@ -283,6 +335,137 @@ export class CriticalHitEffects extends Container {
       // Fade out
       effect.alpha = 1 - progress;
     }, 16);
+  }
+
+  /**
+   * Animate XP gain effect
+   */
+  private animateXpGain(effect: Container): void {
+    const duration = 1500;
+    const startTime = Date.now();
+    const startY = effect.y;
+    
+    const animateInterval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = elapsed / duration;
+      
+      if (progress >= 1) {
+        clearInterval(animateInterval);
+        this.removeEffect(effect);
+        return;
+      }
+      
+      // Float upward slowly
+      effect.y = startY - progress * 60;
+      
+      // Gentle pulsing scale
+      const pulseScale = 1 + Math.sin(progress * Math.PI * 4) * 0.1;
+      effect.scale.set(1.4 * pulseScale);
+      
+      // Fade out gradually
+      effect.alpha = 1 - Math.pow(progress, 2);
+    }, 16);
+  }
+
+  /**
+   * Animate level up effect with dramatic scaling and glow
+   */
+  private animateLevelUp(effect: Container): void {
+    const duration = 3000;
+    const startTime = Date.now();
+    const startY = effect.y;
+    
+    const animateInterval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = elapsed / duration;
+      
+      if (progress >= 1) {
+        clearInterval(animateInterval);
+        this.removeEffect(effect);
+        return;
+      }
+      
+      // Dramatic entrance and exit
+      let scaleMultiplier = 1;
+      if (progress < 0.3) {
+        // Burst in
+        scaleMultiplier = 0.3 + (progress / 0.3) * 0.7;
+      } else if (progress > 0.7) {
+        // Fade out
+        scaleMultiplier = 1 - ((progress - 0.7) / 0.3) * 0.3;
+      }
+      
+      // Pulsing effect
+      const pulse = 1 + Math.sin(progress * Math.PI * 6) * 0.15;
+      effect.scale.set(2.5 * scaleMultiplier * pulse);
+      
+      // Gentle floating
+      effect.y = startY - Math.sin(progress * Math.PI) * 20;
+      
+      // Color shifting (subtle rainbow effect)
+      const text = effect.children[0] as Text;
+      if (text) {
+        const hue = (progress * 360) % 360;
+        text.style.fill = this.hslToHex(hue, 80, 60);
+      }
+      
+      // Fade out in final phase
+      effect.alpha = progress > 0.8 ? 1 - ((progress - 0.8) / 0.2) : 1;
+    }, 16);
+  }
+
+  /**
+   * Animate new symbols unlocked effect
+   */
+  private animateNewSymbolsUnlocked(effect: Container): void {
+    const duration = 2500;
+    const startTime = Date.now();
+    const startY = effect.y;
+    
+    const animateInterval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = elapsed / duration;
+      
+      if (progress >= 1) {
+        clearInterval(animateInterval);
+        this.removeEffect(effect);
+        return;
+      }
+      
+      // Slide in from right and float up
+      const slideProgress = Math.min(progress * 2, 1); // First half for sliding
+      effect.x = (1 - slideProgress) * 200; // Slide from right
+      effect.y = startY - progress * 40;
+      
+      // Gentle scaling
+      const scaleProgress = progress < 0.4 ? progress / 0.4 : 1;
+      effect.scale.set(1.3 * scaleProgress);
+      
+      // Fade out
+      effect.alpha = progress > 0.6 ? 1 - ((progress - 0.6) / 0.4) : 1;
+    }, 16);
+  }
+
+  /**
+   * Convert HSL to hex color
+   */
+  private hslToHex(h: number, s: number, l: number): number {
+    h /= 360;
+    s /= 100;
+    l /= 100;
+    
+    const a = s * Math.min(l, 1 - l);
+    const f = (n: number) => {
+      const k = (n + h * 12) % 12;
+      const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+      return Math.round(255 * color);
+    };
+    
+    const r = f(0);
+    const g = f(8);
+    const b = f(4);
+    
+    return (r << 16) | (g << 8) | b;
   }
   
   /**

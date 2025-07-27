@@ -1,5 +1,7 @@
 import { GameApplication } from '@/core/game-application';
 import { GameController } from '@/game/game-controller';
+import { PlayerProgressionManager } from '@/config/level-config';
+import { SymbolGenerator } from '@/config/symbol-config';
 import type { AssetConfig } from '@/types/game-types';
 
 /**
@@ -66,6 +68,10 @@ async function initializeGame(): Promise<void> {
     console.log('🎮 Loading monster spritesheets...');
     await loadMonsterSpritesheets();
 
+    // Initialize level system and symbol generator
+    console.log('📊 Initializing level progression system...');
+    initializeLevelSystem();
+
     // Start the game
     gameApp.start();
 
@@ -77,6 +83,35 @@ async function initializeGame(): Promise<void> {
   } catch (error) {
     console.error('❌ Failed to initialize game:', error);
     displayErrorMessage('Failed to load game. Please refresh the page.');
+  }
+}
+
+/**
+ * Initialize the level progression system
+ */
+function initializeLevelSystem(): void {
+  // Initialize the player progression manager (singleton)
+  const progressionManager = PlayerProgressionManager.getInstance();
+  console.log(`🎯 Level system initialized at Level ${progressionManager.getProgression().currentLevel}`);
+  
+  // Initialize symbol generator with current unlocked symbols
+  SymbolGenerator.initialize();
+  
+  // Log initial state
+  const progression = progressionManager.getProgression();
+  console.log(`🔓 Unlocked symbols: ${progression.unlockedSymbols.length}/28`);
+  console.log(`💫 Current XP: ${progression.totalXp}`);
+  
+  // Log current level info
+  const currentLevelData = progressionManager.getCurrentLevelData();
+  console.log(`👑 Current Level: ${currentLevelData.level} - ${currentLevelData.title}`);
+  
+  const nextLevelData = progressionManager.getNextLevelData();
+  if (nextLevelData) {
+    const xpProgress = progressionManager.getXpProgress();
+    console.log(`🎯 Next Level: ${nextLevelData.level} (${xpProgress.current}/${xpProgress.required} XP)`);
+  } else {
+    console.log('🏆 Max level reached!');
   }
 }
 

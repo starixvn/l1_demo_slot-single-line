@@ -1,11 +1,14 @@
 import { SymbolType, SymbolConfig } from '@/types/slot-types';
+import { currentUnlockedSymbolPool } from '@/config/level-config';
 
 /**
  * Symbol configurations with probabilities and display properties
+ * Extended to support all 28 symbols across 10 levels
  * Probabilities are weights - higher numbers = more common
  * Higher damage weapons have lower probability (rarer)
  */
 export const SYMBOL_CONFIGS: Record<SymbolType, SymbolConfig> = {
+  // Level 1 default symbols (0-9)
   [SymbolType.SYMBOL_0]: {
     type: SymbolType.SYMBOL_0,
     name: 'Broken',
@@ -79,11 +82,220 @@ export const SYMBOL_CONFIGS: Record<SymbolType, SymbolConfig> = {
   [SymbolType.SYMBOL_7]: {
     type: SymbolType.SYMBOL_7,
     name: 'Magic Staff',
-    value: 7.5, // 6-9 HP damage (average for calculations)
-    probability: 3, // Legendary (3% of remaining weight)
+    value: 7, // 7 HP damage
+    probability: 5, // Legendary (5% of remaining weight)
     color: 0x4B0082, // Indigo/magical
     textColor: 0xFFFFFF,
     emoji: '🔮',
+  },
+
+  [SymbolType.SYMBOL_8]: {
+    type: SymbolType.SYMBOL_8,
+    name: 'Steel Blade',
+    value: 8, // 8 HP damage
+    probability: 4, // Rare
+    color: 0x708090, // Steel gray
+    textColor: 0xFFFFFF,
+    emoji: '⚔️',
+  },
+
+  [SymbolType.SYMBOL_9]: {
+    type: SymbolType.SYMBOL_9,
+    name: 'Mystic Orb',
+    value: 9, // 9 HP damage
+    probability: 3, // Very rare
+    color: 0x9932CC, // Dark orchid
+    textColor: 0xFFFFFF,
+    emoji: '🔮',
+  },
+
+  // Level 2 unlocks (10-11)
+  [SymbolType.SYMBOL_10]: {
+    type: SymbolType.SYMBOL_10,
+    name: 'Digital Scythe',
+    value: 10, // 10 HP damage
+    probability: 2, // Extremely rare
+    color: 0x00FFFF, // Cyan/digital
+    textColor: 0x000000,
+    emoji: '🔪',
+  },
+
+  [SymbolType.SYMBOL_11]: {
+    type: SymbolType.SYMBOL_11,
+    name: 'Light Dagger',
+    value: 11, // 11 HP damage
+    probability: 2, // Extremely rare
+    color: 0xFFFFE0, // Light yellow
+    textColor: 0x000000,
+    emoji: '🗡️',
+  },
+
+  // Level 3 unlocks (12-13)
+  [SymbolType.SYMBOL_12]: {
+    type: SymbolType.SYMBOL_12,
+    name: 'Shadow Bow',
+    value: 12, // 12 HP damage
+    probability: 2, // Extremely rare
+    color: 0x2F2F2F, // Dark gray
+    textColor: 0xFFFFFF,
+    emoji: '🏹',
+  },
+
+  [SymbolType.SYMBOL_13]: {
+    type: SymbolType.SYMBOL_13,
+    name: 'Thunder Mace',
+    value: 13, // 13 HP damage
+    probability: 2, // Extremely rare
+    color: 0xFFD700, // Gold/thunder
+    textColor: 0x000000,
+    emoji: '🔨',
+  },
+
+  // Level 4 unlocks (14-15)
+  [SymbolType.SYMBOL_14]: {
+    type: SymbolType.SYMBOL_14,
+    name: 'Crystal Spear',
+    value: 14, // 14 HP damage
+    probability: 1, // Legendary
+    color: 0xE6E6FA, // Lavender/crystal
+    textColor: 0x000000,
+    emoji: '🪃',
+  },
+
+  [SymbolType.SYMBOL_15]: {
+    type: SymbolType.SYMBOL_15,
+    name: 'Flame Whip',
+    value: 15, // 15 HP damage
+    probability: 1, // Legendary
+    color: 0xFF4500, // Orange red/flame
+    textColor: 0xFFFFFF,
+    emoji: '🔥',
+  },
+
+  // Level 5 unlocks (16-17)
+  [SymbolType.SYMBOL_16]: {
+    type: SymbolType.SYMBOL_16,
+    name: 'Frost Blade',
+    value: 16, // 16 HP damage
+    probability: 1, // Legendary
+    color: 0xB0E0E6, // Powder blue/frost
+    textColor: 0x000000,
+    emoji: '❄️',
+  },
+
+  [SymbolType.SYMBOL_17]: {
+    type: SymbolType.SYMBOL_17,
+    name: 'Void Hammer',
+    value: 17, // 17 HP damage
+    probability: 1, // Legendary
+    color: 0x191970, // Midnight blue/void
+    textColor: 0xFFFFFF,
+    emoji: '🌑',
+  },
+
+  // Level 6 unlocks (18-19)
+  [SymbolType.SYMBOL_18]: {
+    type: SymbolType.SYMBOL_18,
+    name: 'Plasma Rifle',
+    value: 18, // 18 HP damage
+    probability: 1, // Legendary
+    color: 0x00FF7F, // Spring green/plasma
+    textColor: 0x000000,
+    emoji: '🔫',
+  },
+
+  [SymbolType.SYMBOL_19]: {
+    type: SymbolType.SYMBOL_19,
+    name: 'Energy Sword',
+    value: 19, // 19 HP damage
+    probability: 1, // Legendary
+    color: 0x7FFF00, // Chartreuse/energy
+    textColor: 0x000000,
+    emoji: '⚡',
+  },
+
+  // Level 7 unlocks (20-21)
+  [SymbolType.SYMBOL_20]: {
+    type: SymbolType.SYMBOL_20,
+    name: 'Quantum Blade',
+    value: 20, // 20 HP damage
+    probability: 1, // Legendary
+    color: 0xDA70D6, // Orchid/quantum
+    textColor: 0x000000,
+    emoji: '🌌',
+  },
+
+  [SymbolType.SYMBOL_21]: {
+    type: SymbolType.SYMBOL_21,
+    name: 'Cosmic Staff',
+    value: 21, // 21 HP damage
+    probability: 1, // Legendary
+    color: 0x8A2BE2, // Blue violet/cosmic
+    textColor: 0xFFFFFF,
+    emoji: '⭐',
+  },
+
+  // Level 8 unlocks (22-23)
+  [SymbolType.SYMBOL_22]: {
+    type: SymbolType.SYMBOL_22,
+    name: 'Dimensional Axe',
+    value: 22, // 22 HP damage
+    probability: 1, // Legendary
+    color: 0xFF69B4, // Hot pink/dimensional
+    textColor: 0x000000,
+    emoji: '🌀',
+  },
+
+  [SymbolType.SYMBOL_23]: {
+    type: SymbolType.SYMBOL_23,
+    name: 'Time Dagger',
+    value: 23, // 23 HP damage
+    probability: 1, // Legendary
+    color: 0x20B2AA, // Light sea green/time
+    textColor: 0x000000,
+    emoji: '⏰',
+  },
+
+  // Level 9 unlocks (24-25)
+  [SymbolType.SYMBOL_24]: {
+    type: SymbolType.SYMBOL_24,
+    name: 'Soul Reaper',
+    value: 24, // 24 HP damage
+    probability: 1, // Legendary
+    color: 0x800080, // Purple/soul
+    textColor: 0xFFFFFF,
+    emoji: '💀',
+  },
+
+  [SymbolType.SYMBOL_25]: {
+    type: SymbolType.SYMBOL_25,
+    name: 'Infinity Sword',
+    value: 25, // 25 HP damage
+    probability: 1, // Legendary
+    color: 0xFFD700, // Gold/infinity
+    textColor: 0x000000,
+    emoji: '♾️',
+  },
+
+  // Level 10 unlocks (26-27) - Ultimate weapons
+  [SymbolType.SYMBOL_26]: {
+    type: SymbolType.SYMBOL_26,
+    name: 'Divine Hammer',
+    value: 26, // 26 HP damage
+    probability: 1, // Legendary
+    color: 0xFFF8DC, // Cornsilk/divine
+    textColor: 0x000000,
+    emoji: '⚡',
+  },
+
+  [SymbolType.SYMBOL_27]: {
+    type: SymbolType.SYMBOL_27,
+    name: 'Eternal Blade',
+    value: 27, // 27 HP damage
+    probability: 1, // Legendary
+    color: 0xF0F8FF, // Alice blue/eternal
+    textColor: 0x000000,
+    emoji: '🔱',
   },
 };
 
@@ -93,35 +305,41 @@ export const SYMBOL_CONFIGS: Record<SymbolType, SymbolConfig> = {
 export const ALL_SYMBOLS = Object.values(SymbolType);
 
 /**
- * Get total probability weight for normalization
+ * Calculate total probability weight for current unlocked symbols
  */
-export const TOTAL_PROBABILITY = Object.values(SYMBOL_CONFIGS)
-  .reduce((sum, config) => sum + config.probability, 0);
+export function getCurrentTotalProbability(): number {
+  return currentUnlockedSymbolPool.reduce((sum, symbolType) => {
+    return sum + SYMBOL_CONFIGS[symbolType].probability;
+  }, 0);
+}
 
 /**
- * Weighted random symbol generator
+ * Weighted random symbol generator with level-based unlocking
  */
 export class SymbolGenerator {
   private static symbolPool: SymbolType[] = [];
   
   /**
-   * Initialize the symbol pool based on probabilities
+   * Initialize the symbol pool based on currently unlocked symbols and their probabilities
    */
   static initialize(): void {
     this.symbolPool = [];
     
-    Object.values(SYMBOL_CONFIGS).forEach(config => {
+    // Only use symbols from the current unlocked pool
+    currentUnlockedSymbolPool.forEach(symbolType => {
+      const config = SYMBOL_CONFIGS[symbolType];
       // Add symbols to pool based on their probability weight
       for (let i = 0; i < config.probability; i++) {
-        this.symbolPool.push(config.type);
+        this.symbolPool.push(symbolType);
       }
     });
     
-    console.log(`SymbolGenerator: Initialized with ${this.symbolPool.length} weighted symbols`);
+    console.log(`SymbolGenerator: Initialized with ${this.symbolPool.length} weighted symbols from ${currentUnlockedSymbolPool.length} unlocked types`);
+    console.log(`Unlocked symbols:`, currentUnlockedSymbolPool.map(s => SYMBOL_CONFIGS[s].name));
   }
   
   /**
-   * Generate a random symbol based on probability weights
+   * Generate a random symbol based on probability weights from unlocked symbols only
    */
   static generateSymbol(): SymbolType {
     if (this.symbolPool.length === 0) {
@@ -129,7 +347,24 @@ export class SymbolGenerator {
     }
     
     const randomIndex = Math.floor(Math.random() * this.symbolPool.length);
-    return this.symbolPool[randomIndex];
+    const selectedSymbol = this.symbolPool[randomIndex];
+    
+    // Verify the selected symbol is actually unlocked (safety check)
+    if (!currentUnlockedSymbolPool.includes(selectedSymbol)) {
+      console.warn(`Generated symbol ${selectedSymbol} not in unlocked pool, reinitializing...`);
+      this.initialize();
+      return this.generateSymbol(); // Retry after reinitializing
+    }
+    
+    return selectedSymbol;
+  }
+  
+  /**
+   * Refresh symbol pool when new symbols are unlocked
+   */
+  static refreshSymbolPool(): void {
+    console.log(`🔄 Refreshing symbol pool with newly unlocked symbols...`);
+    this.initialize();
   }
   
   /**
@@ -147,17 +382,25 @@ export class SymbolGenerator {
   }
   
   /**
-   * Get probability statistics
+   * Get probability statistics for currently unlocked symbols
    */
-  static getProbabilityStats(): Record<SymbolType, number> {
-    const total = TOTAL_PROBABILITY;
-    const stats: Record<SymbolType, number> = {} as any;
+  static getProbabilityStats(): Record<string, number> {
+    const total = getCurrentTotalProbability();
+    const stats: Record<string, number> = {};
     
-    Object.entries(SYMBOL_CONFIGS).forEach(([symbol, config]) => {
-      stats[symbol as SymbolType] = (config.probability / total) * 100;
+    currentUnlockedSymbolPool.forEach(symbolType => {
+      const config = SYMBOL_CONFIGS[symbolType];
+      stats[config.name] = (config.probability / total) * 100;
     });
     
     return stats;
+  }
+
+  /**
+   * Get unlocked symbols with their configurations
+   */
+  static getUnlockedSymbolConfigs(): SymbolConfig[] {
+    return currentUnlockedSymbolPool.map(symbolType => SYMBOL_CONFIGS[symbolType]);
   }
 }
 
