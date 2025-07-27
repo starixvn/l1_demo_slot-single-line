@@ -1,5 +1,6 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
-import { PlayerProgressionManager, LEVEL_DATA } from '@/config/level-config';
+import { LEVEL_DATA } from '@/config/level-config';
+import { GlobalPlayerState, playerLevel, playerXP } from '@/config/game-globals';
 import { GAME_CONSTANTS } from '@/config/game-config';
 import { SYMBOL_CONFIGS } from '@/config/symbol-config';
 import { SymbolType } from '@/types/slot-types';
@@ -8,7 +9,6 @@ import { SymbolType } from '@/types/slot-types';
  * Level progression display component showing current level, XP progress, and unlocked symbols
  */
 export class LevelProgressionDisplay extends Container {
-  private progressionManager: PlayerProgressionManager;
   private background!: Graphics;
   private levelText!: Text;
   private titleText!: Text;
@@ -26,9 +26,53 @@ export class LevelProgressionDisplay extends Container {
   constructor() {
     super();
     
-    this.progressionManager = PlayerProgressionManager.getInstance();
     this.setupLevelDisplay();
+    this.setupGlobalEventListeners();
     this.updateDisplay();
+  }
+
+  /**
+   * Set up global event listeners for level up events
+   */
+  private setupGlobalEventListeners(): void {
+    // Listen for global level up events
+    window.addEventListener('playerLevelUp', (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { newLevel, newSymbols } = customEvent.detail;
+      console.log(`🎉 LevelProgressionDisplay: Received level up event - Level ${newLevel}`);
+      
+      // Show level up effects
+      this.showLevelUpEffects(newLevel, newSymbols);
+      
+      // Update display
+      this.updateDisplay();
+    });
+
+    // Listen for XP change events for real-time updates
+    window.addEventListener('playerXPChange', (event: Event) => {
+      // Update display in real-time when XP changes
+      this.updateDisplay();
+    });
+  }
+
+  /**
+   * Show level up effects and animations
+   */
+  private showLevelUpEffects(newLevel: number, newSymbols: SymbolType[]): void {
+    // Flash the level display
+    this.levelText.style.fill = 0xFFD700; // Gold
+    this.levelText.scale.set(1.2);
+    
+    // Reset after animation
+    setTimeout(() => {
+      this.levelText.style.fill = 0xFFD700; // Keep gold
+      this.levelText.scale.set(1.0);
+    }, 1000);
+
+    // Show new symbols notification
+    if (newSymbols.length > 0) {
+      this.showNewSymbolsNotification(newSymbols);
+    }
   }
 
   /**
@@ -94,7 +138,7 @@ export class LevelProgressionDisplay extends Container {
     // Create unlocked symbols text
     const symbolsStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: GAME_CONSTANTS.FONT_SIZES.SMALL, // Small text for symbols
+      fontSize: GAME_CONSTANTS.FONT_SIZES.MEDIUM, // Medium text for symbols
       fontWeight: 'normal',
       fill: 0x00FFFF, // Cyan for symbols
       align: 'left',
@@ -127,11 +171,11 @@ export class LevelProgressionDisplay extends Container {
   }
 
   /**
-   * Draw the XP progress bar
+   * Create visual XP bar with enhanced graphics
    */
-  private drawXpProgressBar(): void {
+  private createVisualXPBar(): void {
     const barWidth = this.displayWidth - (this.padding * 2);
-    const barHeight = 12;
+    const barHeight = 16; // Slightly taller for better visibility
     const barX = this.padding;
     const barY = this.padding + 65;
 
@@ -139,45 +183,69 @@ export class LevelProgressionDisplay extends Container {
     this.xpProgressBarBackground.clear();
     this.xpProgressBar.clear();
 
-    // Get XP progress
-    const xpProgress = this.progressionManager.getXpProgress();
+    // Get XP progress from global state
+    const xpProgress = GlobalPlayerState.getXPProgress();
     const progressPercentage = xpProgress.percentage / 100;
 
-    // Draw background
+    // Create background with border
     this.xpProgressBarBackground.beginFill(0x333333);
-    this.xpProgressBarBackground.lineStyle(1, 0x666666, 1);
-    this.xpProgressBarBackground.drawRoundedRect(barX, barY, barWidth, barHeight, 6);
+    this.xpProgressBarBackground.lineStyle(2, 0x666666, 1);
+    this.xpProgressBarBackground.drawRoundedRect(barX, barY, barWidth, barHeight, 8);
     this.xpProgressBarBackground.endFill();
 
-    // Draw progress
+    // Draw progress with gradient effect
     if (progressPercentage > 0) {
       const fillWidth = barWidth * progressPercentage;
       
-      // Gradient effect for progress bar
-      const isNearComplete = progressPercentage > 0.8;
-      const progressColor = isNearComplete ? 0xFFD700 : 0x9932CC; // Gold when near complete, purple normally
+      // Dynamic color based on progress
+      let progressColor = 0x9932CC; // Purple normally
+      if (progressPercentage > 0.8) {
+        progressColor = 0xFFD700; // Gold when near complete
+      } else if (progressPercentage > 0.5) {
+        progressColor = 0x00AAFF; // Blue when halfway
+      }
       
       this.xpProgressBar.beginFill(progressColor);
-      this.xpProgressBar.drawRoundedRect(barX, barY, fillWidth, barHeight, 6);
+      this.xpProgressBar.drawRoundedRect(barX + 2, barY + 2, fillWidth - 4, barHeight - 4, 6);
       this.xpProgressBar.endFill();
+
+      // Add shine effect on the progress bar
+      if (fillWidth > 20) {
+        this.xpProgressBar.beginFill(0xFFFFFF, 0.3);
+        this.xpProgressBar.drawRoundedRect(barX + 2, barY + 2, Math.min(fillWidth - 4, 40), (barHeight - 4) / 2, 3);
+        this.xpProgressBar.endFill();
+      }
     }
 
-    // Position XP text in center of bar
-    this.xpText.text = `${xpProgress.current} / ${xpProgress.required} XP`;
+    // Position XP text in center of bar with shadow
+    this.xpText.text = `${xpProgress.current} / ${xpProgress.required} XP (${Math.round(xpProgress.percentage)}%)`;
     this.xpText.x = barX + barWidth / 2;
     this.xpText.y = barY + barHeight / 2;
     this.xpText.anchor.set(0.5, 0.5);
+    
+    // Add text glow effect
+    this.xpText.style.dropShadow = true;
+    this.xpText.style.dropShadowColor = 0x000000;
+    this.xpText.style.dropShadowBlur = 3;
+    this.xpText.style.dropShadowDistance = 1;
   }
 
   /**
-   * Update all display elements
+   * Draw the XP progress bar (legacy method, now calls createVisualXPBar)
+   */
+  private drawXpProgressBar(): void {
+    this.createVisualXPBar();
+  }
+
+  /**
+   * Update all display elements using global state
    */
   private updateDisplay(): void {
-    const progression = this.progressionManager.getProgression();
-    const currentLevelData = this.progressionManager.getCurrentLevelData();
+    const globalState = GlobalPlayerState.getState();
+    const currentLevelData = LEVEL_DATA[globalState.level - 1]; // Convert to 0-indexed
 
-    // Update level text
-    this.levelText.text = `Level ${progression.currentLevel}`;
+    // Update level text using global variable
+    this.levelText.text = `Level ${playerLevel}`;
 
     // Update title text
     this.titleText.text = currentLevelData.title;
@@ -185,15 +253,26 @@ export class LevelProgressionDisplay extends Container {
     // Update XP progress bar
     this.drawXpProgressBar();
 
-    // Update unlocked symbols count
-    const unlockedCount = progression.unlockedSymbols.length;
+    // Update unlocked symbols count using global state
     const totalSymbols = Object.keys(SYMBOL_CONFIGS).length;
+    const unlockedCount = this.calculateUnlockedSymbolsCount();
     this.unlockedSymbolsText.text = `🔓 Weapons: ${unlockedCount}/${totalSymbols}`;
+  }
 
-    // Check for new symbols notification
-    if (progression.newSymbolsToShow.length > 0) {
-      this.showNewSymbolsNotification(progression.newSymbolsToShow);
+  /**
+   * Calculate unlocked symbols count based on current level
+   */
+  private calculateUnlockedSymbolsCount(): number {
+    let count = LEVEL_DATA[0].defaultSymbols.length; // Level 1 defaults
+    
+    // Add symbols from completed levels
+    for (let i = 1; i < playerLevel; i++) {
+      if (LEVEL_DATA[i]) {
+        count += LEVEL_DATA[i].unlockedSymbols.length;
+      }
     }
+    
+    return count;
   }
 
   /**
@@ -241,7 +320,6 @@ export class LevelProgressionDisplay extends Container {
    */
   private hideNewSymbolsNotification(): void {
     this.newSymbolsNotification.visible = false;
-    this.progressionManager.clearNewSymbolsNotification();
   }
 
   /**
@@ -305,13 +383,13 @@ export class LevelProgressionDisplay extends Container {
     xpProgress: { current: number; required: number; percentage: number };
     unlockedSymbolsCount: number;
   } {
-    const progression = this.progressionManager.getProgression();
-    const xpProgress = this.progressionManager.getXpProgress();
+    const globalState = GlobalPlayerState.getState();
+    const xpProgress = GlobalPlayerState.getXPProgress();
     
     return {
-      level: progression.currentLevel,
+      level: globalState.level,
       xpProgress,
-      unlockedSymbolsCount: progression.unlockedSymbols.length
+      unlockedSymbolsCount: this.calculateUnlockedSymbolsCount()
     };
   }
 } 

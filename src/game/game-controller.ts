@@ -5,8 +5,10 @@ import { GameLoopManager } from '@/systems/game-loop-manager';
 import { PlayerInfoDisplay } from '@/ui/player-info-display';
 import { SettingsPanel } from '@/ui/settings-panel';
 import { LevelProgressionDisplay } from '@/ui/level-progression-display';
+import { LevelUpNotification } from '@/ui/level-up-notification';
 import { PlayerProgressionManager } from '@/config/level-config';
 import { SymbolGenerator } from '@/config/symbol-config';
+import { GlobalPlayerState } from '@/config/game-globals';
 import { GAME_CONSTANTS } from '@/config/game-config';
 
 /**
@@ -24,6 +26,7 @@ export class GameController extends Container {
   private playerInfoDisplay!: PlayerInfoDisplay;
   private settingsPanel!: SettingsPanel;
   private levelProgressionDisplay!: LevelProgressionDisplay;
+  private levelUpNotification!: LevelUpNotification;
   private progressionManager: PlayerProgressionManager;
 
   // Layout configuration based on canvas dimensions
@@ -43,9 +46,36 @@ export class GameController extends Container {
     this.setupGameLoopListeners();
     this.setupUIComponents();
     this.setupProgressionListeners();
+    this.setupGlobalEventListeners();
     
     // Position all elements after everything is created
     this.repositionAllElements();
+  }
+
+  /**
+   * Set up global event listeners for level up and XP changes
+   */
+  private setupGlobalEventListeners(): void {
+    // Listen for level up events
+    window.addEventListener('playerLevelUp', async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { newLevel, levelTitle, newSymbols } = customEvent.detail;
+      
+      console.log(`🎉 GameController: Level up event received - Level ${newLevel}`);
+      
+      // Show prominent level up notification
+      if (this.levelUpNotification && !this.levelUpNotification.isCurrentlyShowing()) {
+        await this.levelUpNotification.showLevelUp(newLevel, levelTitle, newSymbols);
+      }
+    });
+
+    // Listen for XP change events for real-time UI updates
+    window.addEventListener('playerXPChange', (event: Event) => {
+      // Update level progression display
+      if (this.levelProgressionDisplay) {
+        this.levelProgressionDisplay.refresh();
+      }
+    });
   }
 
   /**
@@ -93,6 +123,12 @@ export class GameController extends Container {
     // Create level progression display
     this.levelProgressionDisplay = new LevelProgressionDisplay();
     this.addChild(this.levelProgressionDisplay);
+    
+    // Create level up notification (top layer)
+    this.levelUpNotification = new LevelUpNotification();
+    this.levelUpNotification.x = 0; // Center of screen
+    this.levelUpNotification.y = 0; // Center of screen
+    this.addChild(this.levelUpNotification);
     
     console.log('GameController: UI components setup complete');
   }
@@ -501,39 +537,21 @@ export class GameController extends Container {
   private handleXpTest(): void {
     console.log('GameController: XP test button clicked');
     
-    // Award test XP to trigger level progression
+    // Award test XP using global state system
     const testXpAmount = 25; // Give 25 XP per click
-    const levelUpResult = this.progressionManager.addXp(testXpAmount);
+    GlobalPlayerState.addXP(testXpAmount);
     
-    console.log(`💫 Awarded ${testXpAmount} test XP`);
-    
-    if (levelUpResult.leveledUp) {
-      console.log(`🎉 LEVEL UP! Reached Level ${levelUpResult.newLevel}!`);
-      console.log(`🔓 New symbols unlocked:`, levelUpResult.newSymbols);
-      
-      // Refresh symbol pool with newly unlocked symbols
-      SymbolGenerator.refreshSymbolPool();
-      
-      // Show visual level up effects
-      if (this.combatSystem && this.combatSystem.getEffects) {
-        const effects = this.combatSystem.getEffects();
-        effects.showLevelUp(levelUpResult.newLevel!, 0, -200);
-        
-        if (levelUpResult.newSymbols && levelUpResult.newSymbols.length > 0) {
-          effects.showNewSymbolsUnlocked(levelUpResult.newSymbols, 0, -100);
-        }
-      }
-    }
+    console.log(`💫 Awarded ${testXpAmount} test XP using global state`);
     
     // Update level progression display
     if (this.levelProgressionDisplay) {
       this.levelProgressionDisplay.refresh();
     }
     
-    // Log current progression
-    const progression = this.progressionManager.getProgression();
-    const xpProgress = this.progressionManager.getXpProgress();
-    console.log(`Current Level: ${progression.currentLevel}, XP: ${xpProgress.current}/${xpProgress.required}`);
+    // Log current global state
+    const globalState = GlobalPlayerState.getState();
+    console.log(`Current Global State: Level ${globalState.level}, XP ${globalState.xp}`);
+    console.log(`XP Progress: ${globalState.xpProgress.current}/${globalState.xpProgress.required} (${globalState.xpProgress.percentage.toFixed(1)}%)`);
   }
   
   /**

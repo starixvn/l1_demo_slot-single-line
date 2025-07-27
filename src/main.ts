@@ -2,6 +2,7 @@ import { GameApplication } from '@/core/game-application';
 import { GameController } from '@/game/game-controller';
 import { PlayerProgressionManager } from '@/config/level-config';
 import { SymbolGenerator } from '@/config/symbol-config';
+import { GlobalPlayerState } from '@/config/game-globals';
 import type { AssetConfig } from '@/types/game-types';
 
 /**
@@ -94,13 +95,17 @@ function initializeLevelSystem(): void {
   const progressionManager = PlayerProgressionManager.getInstance();
   console.log(`🎯 Level system initialized at Level ${progressionManager.getProgression().currentLevel}`);
   
+  // Initialize global player state system
+  GlobalPlayerState.initialize();
+  console.log(`🌍 Global player state system initialized`);
+  
   // Initialize symbol generator with current unlocked symbols
   SymbolGenerator.initialize();
   
   // Log initial state
-  const progression = progressionManager.getProgression();
-  console.log(`🔓 Unlocked symbols: ${progression.unlockedSymbols.length}/28`);
-  console.log(`💫 Current XP: ${progression.totalXp}`);
+  const globalState = GlobalPlayerState.getState();
+  console.log(`🔓 Unlocked symbols: ${progressionManager.getProgression().unlockedSymbols.length}/28`);
+  console.log(`💫 Global XP: ${globalState.xp}, Global Level: ${globalState.level}`);
   
   // Log current level info
   const currentLevelData = progressionManager.getCurrentLevelData();
@@ -108,7 +113,7 @@ function initializeLevelSystem(): void {
   
   const nextLevelData = progressionManager.getNextLevelData();
   if (nextLevelData) {
-    const xpProgress = progressionManager.getXpProgress();
+    const xpProgress = GlobalPlayerState.getXPProgress();
     console.log(`🎯 Next Level: ${nextLevelData.level} (${xpProgress.current}/${xpProgress.required} XP)`);
   } else {
     console.log('🏆 Max level reached!');

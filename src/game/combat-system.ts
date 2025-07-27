@@ -3,10 +3,10 @@ import { SlotMachine } from './slot-machine';
 import { MonstersTrail } from './monsters-trail';
 import { CriticalHitEffects } from './critical-hit-effects';
 import { SymbolType, SpinResult, GameState } from '@/types/slot-types';
-import { CombatResult } from '@/types/monster-types';
+import { CombatResult, MonsterType } from '@/types/monster-types';
 import { MonsterGenerator } from '@/config/monster-config';
 import { GameLoopManager } from '@/systems/game-loop-manager';
-import { PlayerProgressionManager } from '@/config/level-config';
+import { GlobalPlayerState } from '@/config/game-globals';
 import { SymbolGenerator } from '@/config/symbol-config';
 
 /**
@@ -222,46 +222,28 @@ export class CombatSystem extends Container {
     const attackResults = this.monstersTrail.attackMonster(weaponSymbols);
     combatResults.push(...attackResults);
     
-    // Process XP rewards for defeated monsters
-    const progressionManager = PlayerProgressionManager.getInstance();
-    let totalXpEarned = 0;
+    // Track defeated monsters for XP calculation
+    const defeatedMonsters: Array<{ type: MonsterType; wasBoss?: boolean }> = [];
     
     for (const result of attackResults) {
-      // Award XP for defeated monsters
-      if (result.monsterDefeated && result.rewards?.experience) {
-        const xpEarned = result.rewards.experience;
-        totalXpEarned += xpEarned;
-        
-        const levelUpResult = progressionManager.addXp(xpEarned);
-        
-        console.log(`💫 Earned ${xpEarned} XP for defeating monster!`);
-        
-        if (levelUpResult.leveledUp) {
-          console.log(`🎉 LEVEL UP! Reached Level ${levelUpResult.newLevel}!`);
-          console.log(`🔓 New symbols unlocked:`, levelUpResult.newSymbols);
-          
-          // Refresh symbol pool with newly unlocked symbols
-          SymbolGenerator.refreshSymbolPool();
-          
-          // Show level up effects
-          await this.showLevelUpEffects(levelUpResult.newLevel!, levelUpResult.newSymbols!);
-        }
-      }
-      
       // Show visual effects for each attack
       await this.showCombatEffects(result);
+      
+      // Track defeated monsters
+      if (result.monsterDefeated) {
+        const currentMonster = this.monstersTrail.getCurrentMonster();
+        if (currentMonster) {
+          const monsterType = currentMonster.getState().type;
+          defeatedMonsters.push({
+            type: monsterType,
+            wasBoss: GlobalPlayerState.isBossMonster(monsterType)
+          });
+        }
+      }
       
       // Small delay between attacks for visual appeal
       if (attackResults.length > 1) {
         await new Promise(resolve => setTimeout(resolve, 300));
-      }
-    }
-    
-    // Show total XP earned if any
-    if (totalXpEarned > 0) {
-      const currentMonster = this.monstersTrail.getCurrentMonster();
-      if (currentMonster) {
-        this.effects.showXpGain(totalXpEarned, currentMonster.x, currentMonster.y - 100);
       }
     }
     
@@ -279,15 +261,15 @@ export class CombatSystem extends Container {
         bonusResult.damage = Math.round(bonusResult.damage * 1.5);
         bonusResult.isCritical = true; // Bonus attacks are always critical
         
-        // Award bonus XP for bonus attacks
-        if (bonusResult.monsterDefeated && bonusResult.rewards?.experience) {
-          const bonusXp = Math.round(bonusResult.rewards.experience * 0.5); // 50% bonus XP
-          const levelUpResult = progressionManager.addXp(bonusXp);
-          console.log(`⭐ Bonus XP: ${bonusXp} for three-of-a-kind finish!`);
-          
-          if (levelUpResult.leveledUp) {
-            SymbolGenerator.refreshSymbolPool();
-            await this.showLevelUpEffects(levelUpResult.newLevel!, levelUpResult.newSymbols!);
+        // Track bonus defeated monsters
+        if (bonusResult.monsterDefeated) {
+          const currentMonster = this.monstersTrail.getCurrentMonster();
+          if (currentMonster) {
+            const monsterType = currentMonster.getState().type;
+            defeatedMonsters.push({
+              type: monsterType,
+              wasBoss: GlobalPlayerState.isBossMonster(monsterType)
+            });
           }
         }
         
@@ -296,10 +278,33 @@ export class CombatSystem extends Container {
       }
     }
     
+    // Apply global XP gain logic after combat
+    await this.applySpinXPGain(defeatedMonsters);
+    
     return combatResults;
   }
-  
 
+  /**
+   * Apply XP gain logic after a spin with bet scaling
+   */
+  private async applySpinXPGain(defeatedMonsters: Array<{ type: MonsterType; wasBoss?: boolean }>): Promise<void> {
+    // Get current bet from slot machine
+    const currentBet = this.slotMachine.getCurrentBet();
+    
+    // Apply global XP gain logic
+    const xpGained = GlobalPlayerState.addSpinXP(currentBet, defeatedMonsters);
+    
+    // Show XP gain effect
+    if (xpGained > 0) {
+      const currentMonster = this.monstersTrail.getCurrentMonster();
+      if (currentMonster) {
+        this.effects.showXpGain(xpGained, currentMonster.x, currentMonster.y - 150);
+      } else {
+        // Show at center if no monster
+        this.effects.showXpGain(xpGained, 0, -150);
+      }
+    }
+  }
   
   /**
    * Show visual effects for combat results

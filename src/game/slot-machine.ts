@@ -441,6 +441,13 @@ export class SlotMachine extends Container {
   }
 
   /**
+   * Get current bet amount for XP scaling
+   */
+  getCurrentBet(): number {
+    return SLOT_CONFIG.BET_AMOUNT;
+  }
+
+  /**
    * Calculate stagger delays for reel stops to align with animation durations
    */
   private calculateStaggerDelays(): number[] {

@@ -2,6 +2,12 @@ import { SymbolType, SymbolConfig } from '@/types/slot-types';
 import { currentUnlockedSymbolPool } from '@/config/level-config';
 
 /**
+ * Global current unlocked symbol pool - starts with Level 1 default symbols
+ * This array is dynamically updated as player levels up
+ */
+export { currentUnlockedSymbolPool } from '@/config/level-config';
+
+/**
  * Symbol configurations with probabilities and display properties
  * Extended to support all 28 symbols across 10 levels
  * Probabilities are weights - higher numbers = more common
