@@ -1,6 +1,6 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { LEVEL_DATA } from '@/config/level-config';
-import { GlobalPlayerState, playerLevel, playerXP } from '@/config/game-globals';
+import { GlobalPlayerState, playerLevel } from '@/config/game-globals';
 import { GAME_CONSTANTS } from '@/config/game-config';
 import { SYMBOL_CONFIGS } from '@/config/symbol-config';
 import { SymbolType } from '@/types/slot-types';
@@ -77,7 +77,7 @@ export class LevelProgressionDisplay extends Container {
     });
 
     // Listen for XP change events for real-time updates
-    window.addEventListener('playerXPChange', (event: Event) => {
+    window.addEventListener('playerXPChange', (_event: Event) => {
       // Update display in real-time when XP changes
       this.updateDisplay();
     });
@@ -86,7 +86,7 @@ export class LevelProgressionDisplay extends Container {
   /**
    * Show level up effects and animations
    */
-  private showLevelUpEffects(newLevel: number, newSymbols: SymbolType[]): void {
+  private showLevelUpEffects(_newLevel: number, newSymbols: SymbolType[]): void {
     // Flash the level display
     this.levelText.style.fill = 0xFFD700; // Gold
     this.levelText.scale.set(1.2);

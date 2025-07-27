@@ -7,8 +7,8 @@ import { SettingsPanel } from '@/ui/settings-panel';
 import { LevelProgressionDisplay } from '@/ui/level-progression-display';
 import { LevelUpNotification } from '@/ui/level-up-notification';
 import { SymbolSystemScreen } from '@/ui/symbol-system-screen';
-import { PlayerProgressionManager } from '@/config/level-config';
-import { SymbolGenerator } from '@/config/symbol-config';
+
+
 import { GlobalPlayerState } from '@/config/game-globals';
 import { GAME_CONSTANTS } from '@/config/game-config';
 
@@ -30,7 +30,6 @@ export class GameController extends Container {
   private levelProgressionDisplay!: LevelProgressionDisplay;
   private levelUpNotification!: LevelUpNotification;
   private symbolSystemScreen!: SymbolSystemScreen;
-  private progressionManager: PlayerProgressionManager;
 
   // Layout configuration based on canvas dimensions
   private canvasWidth: number = 1920;
@@ -43,7 +42,6 @@ export class GameController extends Container {
     super();
     
     this.gameLoopManager = GameLoopManager.getInstance();
-    this.progressionManager = PlayerProgressionManager.getInstance();
     
     this.setupGameController();
     this.setupGameLoopListeners();
@@ -78,7 +76,7 @@ export class GameController extends Container {
     });
 
     // Listen for XP change events for real-time UI updates
-    window.addEventListener('playerXPChange', (event: Event) => {
+    window.addEventListener('playerXPChange', (_event: Event) => {
       // Update level progression display
       if (this.levelProgressionDisplay) {
         this.levelProgressionDisplay.refresh();

@@ -224,13 +224,14 @@ export class CombatSystem extends Container {
     
     // Track defeated monsters for XP calculation
     const defeatedMonsters: Array<{ type: MonsterType; wasBoss?: boolean }> = [];
+    let monsterWasDefeatedThisSpin = false;
     
     for (const result of attackResults) {
       // Show visual effects for each attack
       await this.showCombatEffects(result);
       
-      // Track defeated monsters
-      if (result.monsterDefeated) {
+      // Track defeated monsters (only count once per spin)
+      if (result.monsterDefeated && !monsterWasDefeatedThisSpin) {
         const currentMonster = this.monstersTrail.getCurrentMonster();
         if (currentMonster) {
           const monsterType = currentMonster.getState().type;
@@ -238,6 +239,8 @@ export class CombatSystem extends Container {
             type: monsterType,
             wasBoss: GlobalPlayerState.isBossMonster(monsterType)
           });
+          monsterWasDefeatedThisSpin = true;
+          console.log(`🎯 Monster defeated: ${monsterType} (XP will be awarded)`);
         }
       }
       
@@ -261,8 +264,8 @@ export class CombatSystem extends Container {
         bonusResult.damage = Math.round(bonusResult.damage * 1.5);
         bonusResult.isCritical = true; // Bonus attacks are always critical
         
-        // Track bonus defeated monsters
-        if (bonusResult.monsterDefeated) {
+        // Track bonus defeated monsters (only if not already defeated this spin)
+        if (bonusResult.monsterDefeated && !monsterWasDefeatedThisSpin) {
           const currentMonster = this.monstersTrail.getCurrentMonster();
           if (currentMonster) {
             const monsterType = currentMonster.getState().type;
@@ -270,6 +273,8 @@ export class CombatSystem extends Container {
               type: monsterType,
               wasBoss: GlobalPlayerState.isBossMonster(monsterType)
             });
+            monsterWasDefeatedThisSpin = true;
+            console.log(`🎯 Bonus attack defeated monster: ${monsterType} (XP will be awarded)`);
           }
         }
         
@@ -339,21 +344,7 @@ export class CombatSystem extends Container {
     await new Promise(resolve => setTimeout(resolve, 200));
   }
 
-  /**
-   * Show level up effects and notifications
-   */
-  private async showLevelUpEffects(newLevel: number, newSymbols: SymbolType[]): Promise<void> {
-    // Show level up effect at center of screen
-    this.effects.showLevelUp(newLevel, 0, -200);
-    
-    // Show new symbols unlocked effect
-    if (newSymbols.length > 0) {
-      this.effects.showNewSymbolsUnlocked(newSymbols, 0, -100);
-    }
-    
-    // Wait for level up effects to complete
-    await new Promise(resolve => setTimeout(resolve, 2000));
-  }
+
   
   /**
    * Check if a symbol is a weapon (any symbol with damage value > 0)

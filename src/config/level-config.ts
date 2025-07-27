@@ -1,139 +1,58 @@
 import { LevelData, SymbolType, PlayerProgression } from '@/types/slot-types';
+import { getLevelSystem, LevelConfiguration } from '@/systems/level-system';
 
 /**
- * Comprehensive level system configuration for 10 levels
- * Each level unlocks 2 new symbols (except level 1 which has 10 default symbols)
+ * Convert string symbols to SymbolType enum
  */
-export const LEVEL_DATA: LevelData[] = [
-  {
-    level: 1,
-    xpRequired: 0,           // Starting level
-    xpForThisLevel: 0,       // No XP needed for level 1
-    unlockedSymbols: [],     // No new unlocks at level 1
-    defaultSymbols: [        // 10 default symbols for level 1
-      SymbolType.SYMBOL_0,   // Broken
-      SymbolType.SYMBOL_1,   // Iron Sword
-      SymbolType.SYMBOL_2,   // Bronze Axe
-      SymbolType.SYMBOL_3,   // Silver Sword
-      SymbolType.SYMBOL_4,   // Iron Axe
-      SymbolType.SYMBOL_5,   // Crusader Blade
-      SymbolType.SYMBOL_6,   // War Hammer
-      SymbolType.SYMBOL_7,   // Magic Staff
-      SymbolType.SYMBOL_8,   // Steel Blade
-      SymbolType.SYMBOL_9,   // Mystic Orb
-    ],
-    title: 'Novice Warrior',
-    description: 'Begin your journey with basic weapons and tools.'
-  },
-  {
-    level: 2,
-    xpRequired: 100,         // Total XP: 100
-    xpForThisLevel: 100,     // Level 1 to 2: 100 XP
-    unlockedSymbols: [
-      SymbolType.SYMBOL_10,  // Digital Scythe
-      SymbolType.SYMBOL_11,  // Light Dagger
-    ],
-    defaultSymbols: [],
-    title: 'Tech Initiate',
-    description: 'Unlock advanced digital weaponry and light-based tools.'
-  },
-  {
-    level: 3,
-    xpRequired: 300,         // Total XP: 300 (100 + 200)
-    xpForThisLevel: 200,     // Level 2 to 3: 200 XP
-    unlockedSymbols: [
-      SymbolType.SYMBOL_12,  // Shadow Bow
-      SymbolType.SYMBOL_13,  // Thunder Mace
-    ],
-    defaultSymbols: [],
-    title: 'Elemental Fighter',
-    description: 'Master shadow and thunder elemental weapons.'
-  },
-  {
-    level: 4,
-    xpRequired: 650,         // Total XP: 650 (300 + 350)
-    xpForThisLevel: 350,     // Level 3 to 4: 350 XP
-    unlockedSymbols: [
-      SymbolType.SYMBOL_14,  // Crystal Spear
-      SymbolType.SYMBOL_15,  // Flame Whip
-    ],
-    defaultSymbols: [],
-    title: 'Crystal Forge Master',
-    description: 'Wield crystal and flame weapons with expertise.'
-  },
-  {
-    level: 5,
-    xpRequired: 1200,        // Total XP: 1200 (650 + 550)
-    xpForThisLevel: 550,     // Level 4 to 5: 550 XP
-    unlockedSymbols: [
-      SymbolType.SYMBOL_16,  // Frost Blade
-      SymbolType.SYMBOL_17,  // Void Hammer
-    ],
-    defaultSymbols: [],
-    title: 'Frost & Void Walker',
-    description: 'Command the powers of ice and void.'
-  },
-  {
-    level: 6,
-    xpRequired: 2000,        // Total XP: 2000 (1200 + 800)
-    xpForThisLevel: 800,     // Level 5 to 6: 800 XP
-    unlockedSymbols: [
-      SymbolType.SYMBOL_18,  // Plasma Rifle
-      SymbolType.SYMBOL_19,  // Energy Sword
-    ],
-    defaultSymbols: [],
-    title: 'Energy Weapons Expert',
-    description: 'Harness plasma and pure energy in battle.'
-  },
-  {
-    level: 7,
-    xpRequired: 3100,        // Total XP: 3100 (2000 + 1100)
-    xpForThisLevel: 1100,    // Level 6 to 7: 1100 XP
-    unlockedSymbols: [
-      SymbolType.SYMBOL_20,  // Quantum Blade
-      SymbolType.SYMBOL_21,  // Cosmic Staff
-    ],
-    defaultSymbols: [],
-    title: 'Quantum Guardian',
-    description: 'Manipulate quantum forces and cosmic energy.'
-  },
-  {
-    level: 8,
-    xpRequired: 4550,        // Total XP: 4550 (3100 + 1450)
-    xpForThisLevel: 1450,    // Level 7 to 8: 1450 XP
-    unlockedSymbols: [
-      SymbolType.SYMBOL_22,  // Dimensional Axe
-      SymbolType.SYMBOL_23,  // Time Dagger
-    ],
-    defaultSymbols: [],
-    title: 'Dimensional Warrior',
-    description: 'Control dimensions and bend time to your will.'
-  },
-  {
-    level: 9,
-    xpRequired: 6400,        // Total XP: 6400 (4550 + 1850)
-    xpForThisLevel: 1850,    // Level 8 to 9: 1850 XP
-    unlockedSymbols: [
-      SymbolType.SYMBOL_24,  // Soul Reaper
-      SymbolType.SYMBOL_25,  // Infinity Sword
-    ],
-    defaultSymbols: [],
-    title: 'Soul Master',
-    description: 'Command souls and wield infinite power.'
-  },
-  {
-    level: 10,
-    xpRequired: 8700,        // Total XP: 8700 (6400 + 2300)
-    xpForThisLevel: 2300,    // Level 9 to 10: 2300 XP
-    unlockedSymbols: [
-      SymbolType.SYMBOL_26,  // Divine Hammer
-      SymbolType.SYMBOL_27,  // Eternal Blade
-    ],
-    defaultSymbols: [],
-    title: 'Divine Champion',
-    description: 'Ascend to godhood with divine and eternal weapons.'
+function convertSymbolsToEnum(symbols: string[]): SymbolType[] {
+  return symbols.map(symbol => {
+    // Check if the symbol is a valid enum value
+    if (!Object.values(SymbolType).includes(symbol as SymbolType)) {
+      throw new Error(`Invalid symbol type: ${symbol}`);
+    }
+    return symbol as SymbolType;
+  });
+}
+
+/**
+ * Convert level configuration to legacy format
+ */
+function convertToLegacyFormat(config: LevelConfiguration, levelNumber: number, previousLevelXp: number): LevelData {
+  const xpForThisLevel = config.xpRequired - previousLevelXp;
+  
+  return {
+    level: levelNumber,
+    xpRequired: config.xpRequired,
+    xpForThisLevel: xpForThisLevel,
+    unlockedSymbols: convertSymbolsToEnum(config.unlockedSymbols),
+    defaultSymbols: levelNumber === 1 ? convertSymbolsToEnum(config.unlockedSymbols) : [], // Level 1 symbols are both default and unlocked
+    title: config.title,
+    description: config.description
+  };
+}
+
+/**
+ * Get level data using the new level system
+ */
+function initializeLevelData(): LevelData[] {
+  const levelSystem = getLevelSystem();
+  const levels: LevelData[] = [];
+  
+  for (let i = 1; i <= levelSystem.getMaxLevel(); i++) {
+    const config = levelSystem.getLevelConfig(i);
+    if (config) {
+      const previousLevelXp = i === 1 ? 0 : levelSystem.getLevelConfig(i - 1)?.xpRequired || 0;
+      levels.push(convertToLegacyFormat(config, i, previousLevelXp));
+    }
   }
-];
+  
+  return levels;
+}
+
+/**
+ * Legacy level data - now powered by the new level system
+ */
+export const LEVEL_DATA: LevelData[] = initializeLevelData();
 
 /**
  * Global current unlocked symbol pool - starts with Level 1 default symbols
@@ -142,19 +61,29 @@ export const LEVEL_DATA: LevelData[] = [
 export let currentUnlockedSymbolPool: SymbolType[] = [...LEVEL_DATA[0].defaultSymbols];
 
 /**
- * Player progression manager
+ * Update the global symbol pool from string array
+ */
+export function updateSymbolPool(symbols: string[]): void {
+  currentUnlockedSymbolPool.length = 0;
+  currentUnlockedSymbolPool.push(...convertSymbolsToEnum(symbols));
+}
+
+/**
+ * Player progression manager - now using the new level system
  */
 export class PlayerProgressionManager {
   private static instance: PlayerProgressionManager;
   private progression: PlayerProgression;
+  private levelSystem = getLevelSystem();
 
   private constructor() {
-    // Initialize with Level 1 defaults
+    // Initialize using level system
+    const initialState = this.levelSystem.createInitialPlayerState();
     this.progression = {
-      currentLevel: 1,
+      currentLevel: initialState.level,
       currentXp: 0,
-      totalXp: 0,
-      unlockedSymbols: [...LEVEL_DATA[0].defaultSymbols],
+      totalXp: initialState.totalXp,
+      unlockedSymbols: convertSymbolsToEnum(initialState.unlockedSymbols),
       newSymbolsToShow: []
     };
     
@@ -173,45 +102,52 @@ export class PlayerProgressionManager {
   }
 
   /**
-   * Add XP and check for level ups
+   * Add XP and check for level ups - now using level system
    */
   addXp(amount: number): { leveledUp: boolean; newLevel?: number; newSymbols?: SymbolType[] } {
-    const oldLevel = this.progression.currentLevel;
-    this.progression.currentXp += amount;
-    this.progression.totalXp += amount;
+    // Convert to internal state format
+    const playerState = {
+      level: this.progression.currentLevel,
+      totalXp: this.progression.totalXp,
+      unlockedSymbols: this.progression.unlockedSymbols.map(s => s.toLowerCase())
+    };
 
-    // Check for level up
+    // Use level system for XP processing
+    const result = this.levelSystem.addXpToPlayer(playerState, amount);
+    
+    // Update progression from result
+    this.progression.currentLevel = playerState.level;
+    this.progression.totalXp = playerState.totalXp;
+    this.progression.currentXp = playerState.totalXp;
+    this.progression.unlockedSymbols = convertSymbolsToEnum(playerState.unlockedSymbols);
+
+    // Process level up results
     let leveledUp = false;
+    let newLevel: number | undefined;
     let newSymbols: SymbolType[] = [];
 
-    // Check if we've reached the next level
-    while (this.progression.currentLevel < LEVEL_DATA.length) {
-      const nextLevelData = LEVEL_DATA[this.progression.currentLevel]; // currentLevel is 0-indexed for array
+    if (result.levelUpResults.length > 0) {
+      leveledUp = true;
+      const lastLevelUp = result.levelUpResults[result.levelUpResults.length - 1];
+      newLevel = lastLevelUp.newLevel;
       
-      if (this.progression.totalXp >= nextLevelData.xpRequired) {
-        this.progression.currentLevel++;
-        leveledUp = true;
-        
-        // Add newly unlocked symbols
-        const unlockedSymbols = nextLevelData.unlockedSymbols;
-        this.progression.unlockedSymbols.push(...unlockedSymbols);
-        newSymbols.push(...unlockedSymbols);
-        
-        console.log(`🎉 LEVEL UP! Reached Level ${this.progression.currentLevel}`);
-        console.log(`📦 Unlocked symbols:`, unlockedSymbols.map(s => s));
-      } else {
-        break;
+      // Collect all new symbols from all level ups
+      for (const levelUpResult of result.levelUpResults) {
+        if (levelUpResult.newSymbols) {
+          newSymbols.push(...convertSymbolsToEnum(levelUpResult.newSymbols));
+        }
       }
-    }
 
-    if (leveledUp) {
       this.progression.newSymbolsToShow = newSymbols;
       this.updateGlobalSymbolPool();
+      
+      console.log(`🎉 LEVEL UP! Reached Level ${newLevel}`);
+      console.log(`📦 Unlocked symbols:`, newSymbols.map(s => s));
     }
 
     return {
       leveledUp,
-      newLevel: leveledUp ? this.progression.currentLevel : undefined,
+      newLevel,
       newSymbols: leveledUp ? newSymbols : undefined
     };
   }
@@ -255,20 +191,13 @@ export class PlayerProgressionManager {
    * Get XP progress to next level
    */
   getXpProgress(): { current: number; required: number; percentage: number } {
-    const nextLevel = this.getNextLevelData();
-    if (!nextLevel) {
-      return { current: 0, required: 0, percentage: 100 }; // Max level
-    }
-
-    const currentLevelData = this.getCurrentLevelData();
-    const currentLevelXp = this.progression.totalXp - currentLevelData.xpRequired;
-    const requiredForNext = nextLevel.xpForThisLevel;
-    
-    return {
-      current: currentLevelXp,
-      required: requiredForNext,
-      percentage: Math.min((currentLevelXp / requiredForNext) * 100, 100)
+    const playerState = {
+      level: this.progression.currentLevel,
+      totalXp: this.progression.totalXp,
+      unlockedSymbols: this.progression.unlockedSymbols.map(s => s.toLowerCase())
     };
+
+    return this.levelSystem.getXpProgress(playerState);
   }
 
   /**
@@ -282,11 +211,12 @@ export class PlayerProgressionManager {
    * Reset progression (for testing)
    */
   reset(): void {
+    const initialState = this.levelSystem.createInitialPlayerState();
     this.progression = {
-      currentLevel: 1,
+      currentLevel: initialState.level,
       currentXp: 0,
-      totalXp: 0,
-      unlockedSymbols: [...LEVEL_DATA[0].defaultSymbols],
+      totalXp: initialState.totalXp,
+      unlockedSymbols: convertSymbolsToEnum(initialState.unlockedSymbols),
       newSymbolsToShow: []
     };
     this.updateGlobalSymbolPool();

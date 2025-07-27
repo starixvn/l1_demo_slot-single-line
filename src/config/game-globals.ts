@@ -1,138 +1,123 @@
-import { PlayerProgressionManager, LEVEL_DATA } from '@/config/level-config';
-import { SymbolGenerator, currentUnlockedSymbolPool } from '@/config/symbol-config';
+import { updateSymbolPool } from '@/config/level-config';
+import { SymbolGenerator } from '@/config/symbol-config';
 import { MonsterType } from '@/types/monster-types';
+import { getLevelSystem, PlayerState as LevelSystemPlayerState, MonsterDefeat } from '@/systems/level-system';
 
 /**
- * Global player state variables
+ * Global player state variables (legacy interface)
  */
 export let playerLevel: number = 1;
 export let playerXP: number = 0;
 
 /**
- * XP gain configuration
+ * Internal player state for new level system
  */
-export const XP_CONFIG = {
-  BASE_XP_PER_SPIN: 10,           // Base XP awarded per spin
-  REGULAR_MONSTER_BONUS: 20,      // Additional XP for defeating regular monsters
-  BOSS_MONSTER_BONUS: 50,         // Additional XP for defeating boss monsters
-  BASE_BET: 10,                   // Base bet amount for XP scaling calculation
-} as const;
+let internalPlayerState: LevelSystemPlayerState | null = null;
 
 /**
- * Boss monster types (higher tier monsters that give bonus XP)
+ * Level system instance
  */
-const BOSS_MONSTERS: MonsterType[] = [
-  MonsterType.VENOM,         // High-tier boss
-  MonsterType.FIERCE_HELLHOUND, // High-tier boss
-];
+const levelSystem = getLevelSystem();
 
 /**
- * Global player state manager
+ * Global player state manager - refactored to use new level system
  */
 export class GlobalPlayerState {
-  private static progressionManager: PlayerProgressionManager;
 
   /**
    * Initialize the global state system
    */
   static initialize(): void {
-    this.progressionManager = PlayerProgressionManager.getInstance();
+    // Initialize internal state from level system
+    internalPlayerState = levelSystem.createInitialPlayerState();
     
-    // Sync with existing progression manager
-    const progression = this.progressionManager.getProgression();
-    playerLevel = progression.currentLevel;
-    playerXP = progression.totalXp;
+    // Sync legacy variables
+    playerLevel = internalPlayerState.level;
+    playerXP = internalPlayerState.totalXp;
+    
+    // Update symbol pool
+    updateSymbolPool(internalPlayerState.unlockedSymbols);
     
     console.log(`🌍 Global state initialized: Level ${playerLevel}, XP ${playerXP}`);
+    console.log(`🔓 Initial symbols:`, internalPlayerState.unlockedSymbols);
   }
 
   /**
-   * Enhanced handleLevelUp function with proper state management
+   * Enhanced handleLevelUp function using new level system
    */
   static handleLevelUp(): { leveledUp: boolean; newLevel?: number; newSymbols?: any[]; levelTitle?: string } {
-    const oldLevel = playerLevel;
-    let leveledUp = false;
-    let allNewSymbols: any[] = [];
-    let finalLevelTitle = '';
-
-    // Continuously check for level ups (handle multiple level ups in one XP gain)
-    while (playerLevel < LEVEL_DATA.length) {
-      const nextLevelData = LEVEL_DATA[playerLevel]; // Next level (0-indexed)
-      
-      if (!nextLevelData || playerXP < nextLevelData.xpRequired) {
-        break; // No more level ups possible
-      }
-
-      console.log(`🎯 Level up conditions met! ${playerXP} XP >= ${nextLevelData.xpRequired} required`);
-
-      // Increment playerLevel
-      playerLevel = nextLevelData.level;
-      leveledUp = true;
-      finalLevelTitle = nextLevelData.title;
-
-      // Add unlockedSymbols to currentUnlockedSymbolPool
-      const unlockedSymbols = nextLevelData.unlockedSymbols;
-      if (unlockedSymbols.length > 0) {
-        // Add to global symbol pool
-        currentUnlockedSymbolPool.push(...unlockedSymbols);
-        allNewSymbols.push(...unlockedSymbols);
-        
-        console.log(`🔓 Added ${unlockedSymbols.length} symbols to pool:`, unlockedSymbols);
-        console.log(`📦 Current pool size: ${currentUnlockedSymbolPool.length} symbols`);
-      }
-
-      console.log(`🎉 LEVEL UP! ${oldLevel} → ${playerLevel} (${finalLevelTitle})`);
+    if (!internalPlayerState) {
+      console.error('Internal player state not initialized');
+      return { leveledUp: false };
     }
 
-    if (leveledUp) {
-      // Adjust playerXP - carry over excess XP for the new level
-      const currentLevelData = LEVEL_DATA[playerLevel - 1]; // Current level (0-indexed)
-      const excessXP = playerXP - currentLevelData.xpRequired;
+    const oldLevel = playerLevel;
+    
+    // Check for level ups using level system (no XP addition, just check current state)
+    const result = levelSystem.addXpToPlayer(internalPlayerState, 0);
+    
+    // Update legacy variables
+    playerLevel = internalPlayerState.level;
+    playerXP = internalPlayerState.totalXp;
+
+    if (result.levelUpResults.length > 0) {
+      const lastLevelUp = result.levelUpResults[result.levelUpResults.length - 1];
+      const allNewSymbols: string[] = [];
       
-      console.log(`🔄 XP Adjustment: Total ${playerXP} - Base ${currentLevelData.xpRequired} = ${excessXP} excess XP carried over`);
-      
-      // Note: We keep total XP as is, the UI will calculate the progress bar correctly
+      // Collect all new symbols from all level ups
+      for (const levelUpResult of result.levelUpResults) {
+        if (levelUpResult.newSymbols) {
+          allNewSymbols.push(...levelUpResult.newSymbols);
+        }
+      }
+
+      // Update symbol pool
+      updateSymbolPool(internalPlayerState.unlockedSymbols);
       
       // Refresh symbol generator with new symbols
       SymbolGenerator.refreshSymbolPool();
       
       // Emit level up event for UI updates
-      this.emitLevelUpEvent(playerLevel, finalLevelTitle, allNewSymbols);
+      this.emitLevelUpEvent(playerLevel, lastLevelUp.levelTitle || '', allNewSymbols);
       
-      // Update progression manager to stay in sync
-      const progression = this.progressionManager.getProgression();
-      progression.currentLevel = playerLevel;
-      progression.unlockedSymbols.push(...allNewSymbols);
+      console.log(`🎉 LEVEL UP! ${oldLevel} → ${playerLevel} (${lastLevelUp.levelTitle})`);
+      console.log(`🔓 Added ${allNewSymbols.length} symbols:`, allNewSymbols);
+
+      return {
+        leveledUp: true,
+        newLevel: playerLevel,
+        newSymbols: allNewSymbols,
+        levelTitle: lastLevelUp.levelTitle
+      };
     }
 
-    return {
-      leveledUp,
-      newLevel: leveledUp ? playerLevel : undefined,
-      newSymbols: leveledUp ? allNewSymbols : undefined,
-      levelTitle: leveledUp ? finalLevelTitle : undefined
-    };
+    return { leveledUp: false };
   }
 
   /**
-   * Add XP after a spin with the specified logic
+   * Add XP after a spin using the new level system
    */
   static addSpinXP(currentBet: number, defeatedMonsters: Array<{ type: MonsterType; wasBoss?: boolean }>): number {
-    let baseXP = XP_CONFIG.BASE_XP_PER_SPIN;
-    let bonusXP = 0;
-
-    // Calculate bonus XP from defeated monsters
-    for (const monster of defeatedMonsters) {
-      const isBoss = this.isBossMonster(monster.type);
-      bonusXP += isBoss ? XP_CONFIG.BOSS_MONSTER_BONUS : XP_CONFIG.REGULAR_MONSTER_BONUS;
-      
-      console.log(`💀 Defeated ${monster.type} (${isBoss ? 'BOSS' : 'Regular'}): +${isBoss ? XP_CONFIG.BOSS_MONSTER_BONUS : XP_CONFIG.REGULAR_MONSTER_BONUS} XP`);
+    if (!internalPlayerState) {
+      console.error('Internal player state not initialized');
+      return 0;
     }
 
-    // Scale XP by current bet
-    const betMultiplier = currentBet / XP_CONFIG.BASE_BET;
-    const totalXP = Math.round((baseXP + bonusXP) * betMultiplier);
+    // Convert to level system format
+    const monsters: MonsterDefeat[] = defeatedMonsters.map(monster => ({
+      type: monster.type.toString(),
+      wasBoss: monster.wasBoss
+    }));
 
-    console.log(`📊 XP Calculation: (${baseXP} base + ${bonusXP} bonus) × ${betMultiplier.toFixed(2)} bet multiplier = ${totalXP} XP`);
+    // Calculate XP using level system
+    const totalXP = levelSystem.calculateSpinXp(currentBet, monsters);
+
+    console.log(`📊 XP Calculation:`, {
+      currentBet,
+      defeatedMonstersCount: monsters.length,
+      monsters: monsters.map(m => ({ type: m.type, wasBoss: m.wasBoss })),
+      totalXP
+    });
 
     // Add XP to global state
     this.addXP(totalXP);
@@ -141,16 +126,47 @@ export class GlobalPlayerState {
   }
 
   /**
-   * Add XP and update global variables
+   * Add XP and update global variables using new level system
    */
   static addXP(amount: number): void {
-    // Update global variable
-    playerXP += amount;
+    if (!internalPlayerState) {
+      console.error('Internal player state not initialized');
+      return;
+    }
+
+    // Use level system to add XP
+    const result = levelSystem.addXpToPlayer(internalPlayerState, amount);
+    
+    // Update legacy variables
+    playerLevel = internalPlayerState.level;
+    playerXP = internalPlayerState.totalXp;
     
     console.log(`💫 Added ${amount} XP. Total: ${playerXP} XP, Level: ${playerLevel}`);
 
-    // Check for level up using enhanced function
-    const levelUpResult = this.handleLevelUp();
+    // Handle level ups if they occurred
+    if (result.levelUpResults.length > 0) {
+      const lastLevelUp = result.levelUpResults[result.levelUpResults.length - 1];
+      const allNewSymbols: string[] = [];
+      
+      // Collect all new symbols from all level ups
+      for (const levelUpResult of result.levelUpResults) {
+        if (levelUpResult.newSymbols) {
+          allNewSymbols.push(...levelUpResult.newSymbols);
+        }
+      }
+
+      // Update symbol pool
+      updateSymbolPool(internalPlayerState.unlockedSymbols);
+      
+      // Refresh symbol generator with new symbols
+      SymbolGenerator.refreshSymbolPool();
+      
+      // Emit level up event for UI updates
+      this.emitLevelUpEvent(playerLevel, lastLevelUp.levelTitle || '', allNewSymbols);
+      
+      console.log(`🎉 LEVEL UP! Level ${playerLevel} (${lastLevelUp.levelTitle})`);
+      console.log(`🔓 Added ${allNewSymbols.length} symbols:`, allNewSymbols);
+    }
     
     // Always emit XP change event for UI updates
     this.emitXPChangeEvent();
@@ -202,31 +218,21 @@ export class GlobalPlayerState {
   }
 
   /**
-   * Check if a monster type is considered a boss
+   * Check if a monster type is considered a boss using level system
    */
   static isBossMonster(monsterType: MonsterType): boolean {
-    return BOSS_MONSTERS.includes(monsterType);
+    return levelSystem.isBossMonster(monsterType.toString());
   }
 
   /**
-   * Get current XP progress to next level
+   * Get current XP progress to next level using new level system
    */
   static getXPProgress(): { current: number; required: number; percentage: number } {
-    const nextLevelData = LEVEL_DATA[playerLevel]; // Next level (0-indexed)
-    
-    if (!nextLevelData) {
-      return { current: 0, required: 0, percentage: 100 }; // Max level
+    if (!internalPlayerState) {
+      return { current: 0, required: 0, percentage: 0 };
     }
 
-    const currentLevelData = LEVEL_DATA[playerLevel - 1]; // Current level (0-indexed)
-    const currentLevelXP = playerXP - currentLevelData.xpRequired;
-    const requiredForNext = nextLevelData.xpForThisLevel;
-    
-    return {
-      current: Math.max(0, currentLevelXP),
-      required: requiredForNext,
-      percentage: Math.min((Math.max(0, currentLevelXP) / requiredForNext) * 100, 100)
-    };
+    return levelSystem.getXpProgress(internalPlayerState);
   }
 
   /**
@@ -241,55 +247,63 @@ export class GlobalPlayerState {
   }
 
   /**
-   * Set player level and XP (for testing purposes)
+   * Set player XP (for testing purposes) using new level system
    */
-  static setPlayerState(level: number, xp: number): void {
-    playerLevel = level;
-    playerXP = xp;
-    
-    // Sync with progression manager
-    this.progressionManager.reset();
-    if (xp > 0) {
-      this.progressionManager.addXp(xp);
+  static setPlayerState(xp: number): void {
+    if (!internalPlayerState) {
+      console.error('Internal player state not initialized');
+      return;
     }
-    
-    // Update symbol pool to match level
-    this.updateSymbolPoolForLevel(level);
-    
-    console.log(`🔧 Player state set to Level ${level}, XP ${xp}`);
-  }
 
-  /**
-   * Update symbol pool to match a specific level
-   */
-  private static updateSymbolPoolForLevel(level: number): void {
-    // Clear current pool
-    currentUnlockedSymbolPool.length = 0;
-    
-    // Add default symbols
-    currentUnlockedSymbolPool.push(...LEVEL_DATA[0].defaultSymbols);
-    
-    // Add symbols from all completed levels
-    for (let i = 1; i < level; i++) {
-      if (LEVEL_DATA[i]) {
-        currentUnlockedSymbolPool.push(...LEVEL_DATA[i].unlockedSymbols);
-      }
+    // Reset to initial state
+    const initialState = levelSystem.createInitialPlayerState();
+    internalPlayerState.level = initialState.level;
+    internalPlayerState.totalXp = initialState.totalXp;
+    internalPlayerState.unlockedSymbols = [...initialState.unlockedSymbols];
+
+    // Add XP to reach desired state
+    if (xp > 0) {
+      levelSystem.addXpToPlayer(internalPlayerState, xp);
     }
+
+    // Update legacy variables
+    playerLevel = internalPlayerState.level;
+    playerXP = internalPlayerState.totalXp;
+
+    // Update symbol pool
+    updateSymbolPool(internalPlayerState.unlockedSymbols);
     
     // Refresh symbol generator
     SymbolGenerator.refreshSymbolPool();
+    
+    console.log(`🔧 Player state set to Level ${playerLevel}, XP ${playerXP}`);
   }
 
   /**
-   * Reset player state to initial values
+   * Reset player state to initial values using new level system
    */
   static reset(): void {
-    playerLevel = 1;
-    playerXP = 0;
+    if (!internalPlayerState) {
+      this.initialize();
+      return;
+    }
+
+    // Reset internal state
+    const initialState = levelSystem.createInitialPlayerState();
+    internalPlayerState.level = initialState.level;
+    internalPlayerState.totalXp = initialState.totalXp;
+    internalPlayerState.unlockedSymbols = [...initialState.unlockedSymbols];
+
+    // Update legacy variables
+    playerLevel = internalPlayerState.level;
+    playerXP = internalPlayerState.totalXp;
+
+    // Update symbol pool
+    updateSymbolPool(internalPlayerState.unlockedSymbols);
     
-    this.progressionManager.reset();
-    this.updateSymbolPoolForLevel(1);
+    // Refresh symbol generator
+    SymbolGenerator.refreshSymbolPool();
     
-    console.log(`🔄 Player state reset to Level 1, XP 0`);
+    console.log(`🔄 Player state reset to Level ${playerLevel}, XP ${playerXP}`);
   }
 } 

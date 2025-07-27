@@ -1,0 +1,88 @@
+{
+  "levels": [
+    {
+      "xpRequired": 0,
+      "unlockedSymbols": [
+        "symbol_0",
+        "symbol_1", 
+        "symbol_2",
+        "symbol_3",
+        "symbol_4",
+        "symbol_5",
+        "symbol_6",
+        "symbol_7",
+        "symbol_8",
+        "symbol_9"
+      ],
+      "title": "Novice Warrior",
+      "description": "Begin your journey with basic weapons and tools."
+    },
+    {
+      "xpRequired": 100,
+      "unlockedSymbols": ["symbol_10", "symbol_11"],
+      "title": "Tech Initiate",
+      "description": "Unlock advanced digital weaponry and light-based tools."
+    },
+    {
+      "xpRequired": 300,
+      "unlockedSymbols": ["symbol_12", "symbol_13"],
+      "title": "Elemental Fighter",
+      "description": "Master shadow and thunder elemental weapons."
+    },
+    {
+      "xpRequired": 650,
+      "unlockedSymbols": ["symbol_14", "symbol_15"],
+      "title": "Crystal Forge Master",
+      "description": "Wield crystal and flame weapons with expertise."
+    },
+    {
+      "xpRequired": 1200,
+      "unlockedSymbols": ["symbol_16", "symbol_17"],
+      "title": "Frost & Void Walker",
+      "description": "Command the powers of ice and void."
+    },
+    {
+      "xpRequired": 2000,
+      "unlockedSymbols": ["symbol_18", "symbol_19"],
+      "title": "Energy Weapons Expert",
+      "description": "Harness plasma and pure energy in battle."
+    },
+    {
+      "xpRequired": 3100,
+      "unlockedSymbols": ["symbol_20", "symbol_21"],
+      "title": "Quantum Guardian",
+      "description": "Manipulate quantum forces and cosmic energy."
+    },
+    {
+      "xpRequired": 4550,
+      "unlockedSymbols": ["symbol_22", "symbol_23"],
+      "title": "Dimensional Warrior",
+      "description": "Control dimensions and bend time to your will."
+    },
+    {
+      "xpRequired": 6400,
+      "unlockedSymbols": ["symbol_24", "symbol_25"],
+      "title": "Soul Master",
+      "description": "Command souls and wield infinite power."
+    },
+    {
+      "xpRequired": 8700,
+      "unlockedSymbols": ["symbol_26", "symbol_27"],
+      "title": "Divine Champion",
+      "description": "Ascend to godhood with divine and eternal weapons."
+    }
+  ],
+  "xpConfig": {
+    "baseXpPerSpin": 10,
+    "regularMonsterBonus": 20,
+    "bossMonsterBonus": 50,
+    "baseBet": 10
+  },
+  "bossMonsters": ["FIERCE_HELLHOUND", "MUMMY"],
+  "metadata": {
+    "version": "1.0.0",
+    "description": "Level progression configuration for slot machine game",
+    "totalLevels": 10,
+    "totalSymbols": 28
+  }
+} 

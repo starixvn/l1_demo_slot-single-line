@@ -2,8 +2,7 @@ import { Container, Graphics, Text, TextStyle, Sprite } from 'pixi.js';
 import { SymbolType } from '@/types/slot-types';
 import { SYMBOL_CONFIGS } from '@/config/symbol-config';
 import { currentUnlockedSymbolPool } from '@/config/level-config';
-import { LEVEL_DATA } from '@/config/level-config';
-import { GlobalPlayerState, playerLevel } from '@/config/game-globals';
+import { playerLevel } from '@/config/game-globals';
 import { getSymbolTexture } from '@/systems/asset-manager';
 import { GAME_CONSTANTS } from '@/config/game-config';
 

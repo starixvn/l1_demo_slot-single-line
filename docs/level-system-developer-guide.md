@@ -107,12 +107,51 @@ baseXP = 10
 regularMonster = +20 XP
 bossMonster = +50 XP
 
-// Bet scaling
+// Bet scaling (risk-reward mechanism)
 betMultiplier = currentBet / baseBet
 
 // Final calculation
 totalXP = (baseXP + monsterBonuses) * betMultiplier
 ```
+
+### Bet Scaling & Risk-Reward System
+
+The bet scaling system creates a **risk-reward progression mechanism** that allows players to choose their advancement speed:
+
+#### **How It Works:**
+- `baseBet`: Reference bet amount (default: 10 coins) stored in `level-data.json`
+- `currentBet`: Player's actual bet amount from `SLOT_CONFIG.BET_AMOUNT`
+- **Multiplier**: `currentBet ÷ baseBet` scales all XP rewards
+
+#### **Example Scenarios:**
+
+**Standard Bet (10 coins)**
+```javascript
+currentBet = 10, baseBet = 10
+multiplier = 1x → Normal XP: 30 XP per monster defeat
+```
+
+**High Risk Bet (20 coins)**
+```javascript
+currentBet = 20, baseBet = 10  
+multiplier = 2x → Double XP: 60 XP per monster defeat
+```
+
+**Conservative Bet (5 coins)**
+```javascript
+currentBet = 5, baseBet = 10
+multiplier = 0.5x → Half XP: 15 XP per monster defeat
+```
+
+#### **Game Design Benefits:**
+
+1. **Player Choice**: Casual vs. hardcore progression paths
+2. **Economic Balance**: Higher risk = faster advancement
+3. **Replayability**: Different strategies for different playstyles
+4. **Configuration Flexibility**: Easy balance adjustments via JSON
+
+#### **Important Configuration Note:**
+The `baseBet` in `level-data.json` **must match** `SLOT_CONFIG.BET_AMOUNT` to maintain 1x baseline multiplier. Mismatched values will cause unexpected XP scaling (e.g., baseBet=1, actualBet=10 = 10x XP gain!).
 
 ### Level Requirements
 ```
@@ -127,13 +166,77 @@ Level 8 → 9: 1850 XP (6400 total)
 Level 9 → 10: 2300 XP (8700 total)
 ```
 
+### Data Structure Design Principles
+
+The level system follows key architectural principles for maintainable, efficient data design:
+
+#### **1. Array Index as Level Number**
+```json
+{
+  "levels": [
+    { "xpRequired": 0, "unlockedSymbols": [...] },     // Index 0 = Level 1
+    { "xpRequired": 100, "unlockedSymbols": [...] },   // Index 1 = Level 2
+    { "xpRequired": 300, "unlockedSymbols": [...] }    // Index 2 = Level 3
+  ]
+}
+```
+**Benefits:**
+- **Impossible invalid states** - No risk of level sequence errors
+- **O(1) access** - Direct array lookup vs. O(n) searches
+- **Simpler validation** - No sorting or sequence checking needed
+
+#### **2. Don't Store What You Can Compute**
+```typescript
+// ❌ Before: Redundant storage
+{
+  "xpRequired": 300,
+  "xpForThisLevel": 200  // Always = current.xpRequired - previous.xpRequired
+}
+
+// ✅ After: Computed on-demand
+{
+  "xpRequired": 300  // xpForThisLevel calculated automatically
+}
+
+// Computed when needed:
+const xpForThisLevel = config.xpRequired - previousLevelXp;
+```
+
+#### **3. Consistent Property Usage**
+```typescript
+// ❌ Before: Confusing dual properties
+{
+  "unlockedSymbols": [],                     // Level 1: Empty
+  "defaultSymbols": ["symbol_0"..."symbol_9"] // Level 1: Special case
+}
+{
+  "unlockedSymbols": ["symbol_10", "symbol_11"], // Level 2+: Normal
+  "defaultSymbols": []                            // Level 2+: Always empty
+}
+
+// ✅ After: Single, consistent property
+{
+  "unlockedSymbols": ["symbol_0"..."symbol_9"]    // Level 1: Same pattern
+}
+{
+  "unlockedSymbols": ["symbol_10", "symbol_11"]   // Level 2+: Same pattern
+}
+```
+
+#### **Configuration Benefits:**
+- **30% smaller** configuration files
+- **Impossible data inconsistencies** (no computed values to get wrong)
+- **Easier maintenance** - Single source of truth for each concept
+- **Better performance** - Less data transfer, faster parsing
+
 ### Symbol Unlocking Pattern
-- **Level 1**: 10 default symbols (0-9)
+- **Level 1**: 10 starting symbols (0-9) unlocked immediately
 - **Level 2-10**: 2 new symbols per level
   - Level 2: symbols 10-11
   - Level 3: symbols 12-13
   - Level 4: symbols 14-15
   - ...and so on
+- **All symbols** use the same `unlockedSymbols` property consistently
 
 ## Event System
 
@@ -194,6 +297,10 @@ GlobalPlayerState.handleLevelUp();
 
 // Check current symbol pool
 console.log(currentUnlockedSymbolPool);
+
+// Run level system tests
+import { runTests } from '../tests/systems/level-system.test.ts';
+runTests();
 ```
 
 ### Debug Logging
@@ -222,22 +329,29 @@ The system includes comprehensive logging:
 
 ## Best Practices
 
-### 1. State Management
+### 1. Data Structure Design
+- **Don't store computed values** - Calculate `xpForThisLevel`, `levelNumber`, etc. on-demand
+- **Use array indices meaningfully** - Index 0 = Level 1, Index 1 = Level 2
+- **Maintain property consistency** - Same property names across all levels
+- **Validate data structure** during development, not runtime
+- **Keep JSON minimal** - Only store essential data
+
+### 2. State Management
 - **Always use `GlobalPlayerState` methods** for XP/level changes
 - **Never directly modify** `playerLevel` or `playerXP` outside of `GlobalPlayerState`
 - **Always emit events** after state changes
 
-### 2. Symbol Pool Management
+### 3. Symbol Pool Management
 - **Call `SymbolGenerator.refreshSymbolPool()`** after level ups
 - **Use `currentUnlockedSymbolPool`** for all symbol generation
 - **Never hardcode symbol availability**
 
-### 3. UI Updates
+### 4. UI Updates
 - **Listen for events** rather than polling for changes
 - **Update UI immediately** when events are received
 - **Handle both visible and hidden states** for modals
 
-### 4. Event Handling
+### 5. Event Handling
 ```typescript
 // ✅ Correct: Listen for specific events
 window.addEventListener('playerLevelUp', (event: Event) => {
@@ -249,26 +363,85 @@ window.addEventListener('playerLevelUp', (event: Event) => {
 // this.someOtherComponent.updateLevel();
 ```
 
-### 5. Error Handling
+### 6. Error Handling
 - **Validate XP amounts** before processing
 - **Check level bounds** (1-10)
 - **Handle missing symbol configurations** gracefully
 - **Log errors** for debugging
 
+### 7. Configuration Design Principles
+```typescript
+// ✅ Good: Minimal, normalized data
+{
+  "xpRequired": 300,
+  "unlockedSymbols": ["symbol_12", "symbol_13"]
+}
+
+// ❌ Bad: Redundant, denormalized data
+{
+  "level": 3,                    // Redundant (array index)
+  "xpRequired": 300,
+  "xpForThisLevel": 200,         // Computable
+  "unlockedSymbols": ["symbol_12"],
+  "defaultSymbols": []           // Always empty except level 1
+}
+```
+
 ## Extension Guidelines
 
 ### Adding New Levels
-1. **Update `LEVEL_DATA`** with new level configuration
-2. **Add new symbols** to `SYMBOL_CONFIGS` 
-3. **Update symbol assets** in asset manager
-4. **Test XP progression** thoroughly
-5. **Update UI layouts** if needed
+```json
+// ✅ Correct: Add to end of levels array
+{
+  "levels": [
+    // ... existing levels ...
+    {
+      "xpRequired": 12000,                      // Total XP needed
+      "unlockedSymbols": ["symbol_28", "symbol_29"], // 2 new symbols
+      "title": "Legendary Hero",
+      "description": "Master of all weapons and magic."
+    }
+  ]
+}
+```
+
+**Steps:**
+1. **Append to `level-data.json`** - Add new level object to end of array
+2. **Only include essential data** - `xpRequired`, `unlockedSymbols`, `title`, `description`
+3. **Add new symbols** to `SYMBOL_CONFIGS` in `symbol-config.ts`
+4. **Update symbol assets** in asset manager
+5. **Test XP progression** thoroughly
+6. **No code changes needed** - Array index automatically becomes level number
+
+**❌ Don't:**
+- Add `level` property (redundant - use array index)
+- Add `xpForThisLevel` (computed automatically)
+- Add `defaultSymbols` (use `unlockedSymbols` consistently)
 
 ### Adding New XP Sources
 1. **Use `GlobalPlayerState.addXP()`** or `addSpinXP()`
 2. **Follow existing bonus patterns**
 3. **Emit appropriate events**
 4. **Add logging** for debugging
+
+### Modifying Configuration Structure
+```typescript
+// ✅ Follow these principles when adding new data:
+
+// 1. Don't store computable values
+const computed = calculateFromExisting(baseData);
+
+// 2. Use meaningful array indices
+const levelConfig = levels[playerLevel - 1]; // Level 1 = Index 0
+
+// 3. Maintain consistency across all entries
+// If one level has a property, all should have it (or a clear default)
+
+// 4. Validate during development, not runtime
+if (process.env.NODE_ENV === 'development') {
+  validateConfiguration(config);
+}
+```
 
 ### Modifying UI Components
 1. **Listen for existing events** when possible
@@ -300,6 +473,33 @@ window.addEventListener('playerLevelUp', (event: Event) => {
 - Check if component receives level up events
 - Verify `currentUnlockedSymbolPool` matches expected symbols
 
+#### "XP gain is too high/low (level jumping)"
+- **Root Cause**: Configuration mismatch between `baseBet` and actual bet amount
+- **Check**: `level-data.json` → `xpConfig.baseBet` should match `SLOT_CONFIG.BET_AMOUNT`
+- **Symptoms**: 
+  - 10x XP gain (baseBet=1, actualBet=10)
+  - 0.1x XP gain (baseBet=100, actualBet=10)
+  - Skipping multiple levels in one spin
+- **Debug**: Check console logs for XP calculation details
+- **Fix**: Update `baseBet` in `level-data.json` to match actual bet amount
+
+#### "Configuration errors after editing level-data.json"
+- **Common Issues**: 
+  - Adding redundant properties (`level`, `xpForThisLevel`, `defaultSymbols`)
+  - Inconsistent property names across levels
+  - Storing computed values that get out of sync
+- **Best Practice**: Follow the **minimal data structure**:
+  ```json
+  {
+    "xpRequired": 300,           // ✅ Essential: Total XP needed
+    "unlockedSymbols": [...],    // ✅ Essential: Symbols for this level
+    "title": "...",              // ✅ Essential: Display name
+    "description": "..."         // ✅ Essential: Display description
+  }
+  ```
+- **Debug**: Check TypeScript errors for missing/extra properties
+- **Fix**: Remove computed/redundant fields, ensure all levels have same structure
+
 ### Performance Considerations
 - **Event listeners** are lightweight and efficient
 - **Symbol pool refreshing** is fast (< 1ms)
@@ -320,4 +520,17 @@ window.addEventListener('playerLevelUp', (event: Event) => {
 
 ---
 
-*This document should be updated whenever the level system is modified. Last updated: $(date)* 
+## Summary
+
+The level system has been architected with **simplicity and maintainability** as core principles:
+
+1. **Array index = Level number** - Eliminates sequence validation complexity
+2. **Don't store computed values** - Reduces data redundancy and inconsistency risks  
+3. **Consistent property usage** - Same patterns across all levels
+4. **Minimal configuration** - Only essential data, 30% smaller files
+
+These principles ensure the system remains **robust**, **performant**, and **easy to extend**.
+
+---
+
+*This document reflects the simplified data structure architecture implemented in the level system refactoring. Last updated with architectural simplification principles.* 

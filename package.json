@@ -9,7 +9,9 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
-    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "test": "npx tsx tests/systems/level-system.test.ts",
+    "test:level-system": "npx tsx tests/systems/level-system.test.ts"
   },
   "dependencies": {
     "pixi.js": "^7.3.2"
@@ -20,6 +22,7 @@
     "@typescript-eslint/parser": "^6.7.4",
     "eslint": "^8.50.0",
     "terser": "^5.43.1",
+    "tsx": "^4.6.0",
     "typescript": "^5.2.2",
     "vite": "^4.4.9"
   },

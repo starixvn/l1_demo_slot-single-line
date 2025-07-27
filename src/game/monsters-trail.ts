@@ -59,7 +59,7 @@ export class MonstersTrail extends Container {
    * Reposition all elements according to the current area configuration
    */
   private repositionElements(): void {
-    const { areaHeight, areaWidth, centerX, topY } = this.areaConfig;
+    const { areaHeight, centerX, topY } = this.areaConfig;
     
     // Position title at the top of the area
     this.trailTitle.x = centerX;

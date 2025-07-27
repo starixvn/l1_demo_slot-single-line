@@ -162,14 +162,13 @@ export const CRITICAL_HIT_CONFIG: CriticalHitConfig = {
   baseChance: 10, // 10% base critical hit chance
   multiplier: 2.0, // 2x damage on critical hits
   weaponModifiers: {
-    [SymbolType.SYMBOL_0]: -10, // -10% crit chance (broken, never crits)
-    [SymbolType.SYMBOL_1]: 0,   // No modifier (iron sword)
-    [SymbolType.SYMBOL_2]: 2,   // +2% crit chance (bronze axe)
-    [SymbolType.SYMBOL_3]: 5,   // +5% crit chance (silver sword)
-    [SymbolType.SYMBOL_4]: 8,   // +8% crit chance (iron axe)
-    [SymbolType.SYMBOL_5]: 15,  // +15% crit chance (crusader blade)
-    [SymbolType.SYMBOL_6]: 20,  // +20% crit chance (war hammer)
-    [SymbolType.SYMBOL_7]: 25,  // +25% crit chance (magic staff)
+    [SymbolType.SYMBOL_0]: -10, [SymbolType.SYMBOL_1]: 0, [SymbolType.SYMBOL_2]: 2, [SymbolType.SYMBOL_3]: 5,
+    [SymbolType.SYMBOL_4]: 8, [SymbolType.SYMBOL_5]: 15, [SymbolType.SYMBOL_6]: 20, [SymbolType.SYMBOL_7]: 25,
+    [SymbolType.SYMBOL_8]: 3, [SymbolType.SYMBOL_9]: 6, [SymbolType.SYMBOL_10]: 10, [SymbolType.SYMBOL_11]: 12,
+    [SymbolType.SYMBOL_12]: 14, [SymbolType.SYMBOL_13]: 16, [SymbolType.SYMBOL_14]: 18, [SymbolType.SYMBOL_15]: 22,
+    [SymbolType.SYMBOL_16]: 24, [SymbolType.SYMBOL_17]: 26, [SymbolType.SYMBOL_18]: 28, [SymbolType.SYMBOL_19]: 30,
+    [SymbolType.SYMBOL_20]: 32, [SymbolType.SYMBOL_21]: 34, [SymbolType.SYMBOL_22]: 36, [SymbolType.SYMBOL_23]: 38,
+    [SymbolType.SYMBOL_24]: 40, [SymbolType.SYMBOL_25]: 42, [SymbolType.SYMBOL_26]: 44, [SymbolType.SYMBOL_27]: 50,
   },
 };
 
@@ -204,14 +203,13 @@ export const HP_BAR_CONFIG: HpBarConfig = {
  * Note: SYMBOL_7 (Magic Staff) has variable damage (6-9), so we use average for base calculations
  */
 export const WEAPON_DAMAGE: Record<SymbolType, number> = {
-  [SymbolType.SYMBOL_0]: 0,   // 0 damage (broken)
-  [SymbolType.SYMBOL_1]: 1,   // 1 damage (iron sword)
-  [SymbolType.SYMBOL_2]: 2,   // 2 damage (bronze axe)
-  [SymbolType.SYMBOL_3]: 3,   // 3 damage (silver sword)
-  [SymbolType.SYMBOL_4]: 4,   // 4 damage (iron axe)
-  [SymbolType.SYMBOL_5]: 5,   // 5 damage (crusader blade)
-  [SymbolType.SYMBOL_6]: 6,   // 6 damage (war hammer)
-  [SymbolType.SYMBOL_7]: 7.5, // 6-9 damage average (magic staff)
+  [SymbolType.SYMBOL_0]: 0, [SymbolType.SYMBOL_1]: 1, [SymbolType.SYMBOL_2]: 2, [SymbolType.SYMBOL_3]: 3,
+  [SymbolType.SYMBOL_4]: 4, [SymbolType.SYMBOL_5]: 5, [SymbolType.SYMBOL_6]: 6, [SymbolType.SYMBOL_7]: 7.5,
+  [SymbolType.SYMBOL_8]: 8, [SymbolType.SYMBOL_9]: 9, [SymbolType.SYMBOL_10]: 10, [SymbolType.SYMBOL_11]: 11,
+  [SymbolType.SYMBOL_12]: 12, [SymbolType.SYMBOL_13]: 13, [SymbolType.SYMBOL_14]: 14, [SymbolType.SYMBOL_15]: 15,
+  [SymbolType.SYMBOL_16]: 16, [SymbolType.SYMBOL_17]: 17, [SymbolType.SYMBOL_18]: 18, [SymbolType.SYMBOL_19]: 19,
+  [SymbolType.SYMBOL_20]: 20, [SymbolType.SYMBOL_21]: 21, [SymbolType.SYMBOL_22]: 22, [SymbolType.SYMBOL_23]: 23,
+  [SymbolType.SYMBOL_24]: 24, [SymbolType.SYMBOL_25]: 25, [SymbolType.SYMBOL_26]: 26, [SymbolType.SYMBOL_27]: 27,
 };
 
 /**
