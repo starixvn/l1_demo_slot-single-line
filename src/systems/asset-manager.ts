@@ -264,17 +264,56 @@ export class AssetManager extends EventTarget {
 } 
 
 /**
- * Symbol asset definitions using the new symbol_{number} pattern
+ * Symbol asset definitions using numbered PNG files for all 28 symbols
  */
 const SYMBOL_ASSETS = {
-  [SymbolType.SYMBOL_0]: 'src/assets/images/symbols/broken.png',         // 0 damage
-  [SymbolType.SYMBOL_1]: 'src/assets/images/symbols/iron-sword.png',     // 1 damage
-  [SymbolType.SYMBOL_2]: 'src/assets/images/symbols/bronze-axe.png',     // 2 damage
-  [SymbolType.SYMBOL_3]: 'src/assets/images/symbols/silver-sword.png',   // 3 damage
-  [SymbolType.SYMBOL_4]: 'src/assets/images/symbols/iron-axe.png',       // 4 damage
-  [SymbolType.SYMBOL_5]: 'src/assets/images/symbols/crusader-blade.png', // 5 damage
-  [SymbolType.SYMBOL_6]: 'src/assets/images/symbols/war-hammer.png',     // 6 damage
-  [SymbolType.SYMBOL_7]: 'src/assets/images/symbols/magic-staff.png',    // 7 damage
+  // Level 1 default symbols (0-9)
+  [SymbolType.SYMBOL_0]: 'src/assets/images/symbols/0.png',   // 0 damage - Broken
+  [SymbolType.SYMBOL_1]: 'src/assets/images/symbols/1.png',   // 1 damage - Iron Sword
+  [SymbolType.SYMBOL_2]: 'src/assets/images/symbols/2.png',   // 2 damage - Bronze Axe
+  [SymbolType.SYMBOL_3]: 'src/assets/images/symbols/3.png',   // 3 damage - Silver Sword
+  [SymbolType.SYMBOL_4]: 'src/assets/images/symbols/4.png',   // 4 damage - Iron Axe
+  [SymbolType.SYMBOL_5]: 'src/assets/images/symbols/5.png',   // 5 damage - Crusader Blade
+  [SymbolType.SYMBOL_6]: 'src/assets/images/symbols/6.png',   // 6 damage - War Hammer
+  [SymbolType.SYMBOL_7]: 'src/assets/images/symbols/7.png',   // 7 damage - Magic Staff
+  [SymbolType.SYMBOL_8]: 'src/assets/images/symbols/8.png',   // 8 damage - Steel Blade
+  [SymbolType.SYMBOL_9]: 'src/assets/images/symbols/9.png',   // 9 damage - Mystic Orb
+  
+  // Level 2 unlocks (10-11)
+  [SymbolType.SYMBOL_10]: 'src/assets/images/symbols/10.png', // 10 damage - Digital Scythe
+  [SymbolType.SYMBOL_11]: 'src/assets/images/symbols/11.png', // 11 damage - Light Dagger
+  
+  // Level 3 unlocks (12-13)
+  [SymbolType.SYMBOL_12]: 'src/assets/images/symbols/12.png', // 12 damage - Shadow Bow
+  [SymbolType.SYMBOL_13]: 'src/assets/images/symbols/13.png', // 13 damage - Thunder Mace
+  
+  // Level 4 unlocks (14-15)
+  [SymbolType.SYMBOL_14]: 'src/assets/images/symbols/14.png', // 14 damage - Crystal Spear
+  [SymbolType.SYMBOL_15]: 'src/assets/images/symbols/15.png', // 15 damage - Flame Whip
+  
+  // Level 5 unlocks (16-17)
+  [SymbolType.SYMBOL_16]: 'src/assets/images/symbols/16.png', // 16 damage - Frost Blade
+  [SymbolType.SYMBOL_17]: 'src/assets/images/symbols/17.png', // 17 damage - Void Hammer
+  
+  // Level 6 unlocks (18-19)
+  [SymbolType.SYMBOL_18]: 'src/assets/images/symbols/18.png', // 18 damage - Plasma Rifle
+  [SymbolType.SYMBOL_19]: 'src/assets/images/symbols/19.png', // 19 damage - Energy Sword
+  
+  // Level 7 unlocks (20-21)
+  [SymbolType.SYMBOL_20]: 'src/assets/images/symbols/20.png', // 20 damage - Quantum Blade
+  [SymbolType.SYMBOL_21]: 'src/assets/images/symbols/21.png', // 21 damage - Cosmic Staff
+  
+  // Level 8 unlocks (22-23)
+  [SymbolType.SYMBOL_22]: 'src/assets/images/symbols/22.png', // 22 damage - Dimensional Axe
+  [SymbolType.SYMBOL_23]: 'src/assets/images/symbols/23.png', // 23 damage - Time Dagger
+  
+  // Level 9 unlocks (24-25)
+  [SymbolType.SYMBOL_24]: 'src/assets/images/symbols/24.png', // 24 damage - Soul Reaper
+  [SymbolType.SYMBOL_25]: 'src/assets/images/symbols/25.png', // 25 damage - Infinity Sword
+  
+  // Level 10 unlocks (26-27) - Ultimate weapons
+  [SymbolType.SYMBOL_26]: 'src/assets/images/symbols/26.png', // 26 damage - Divine Hammer
+  [SymbolType.SYMBOL_27]: 'src/assets/images/symbols/27.png', // 27 damage - Eternal Blade
 } as const;
 
 /**
