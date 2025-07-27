@@ -166,14 +166,14 @@ export class LevelProgressionDisplay extends Container {
     // Create unlocked symbols text (styled as clickable button)
     const symbolsStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
-      fontSize: GAME_CONSTANTS.FONT_SIZES.MEDIUM, // Medium text for symbols
+      fontSize: GAME_CONSTANTS.FONT_SIZES.LARGE, // Large text since it's clickable
       fontWeight: 'bold', // Bold to indicate it's clickable
       fill: 0x00FFFF, // Cyan for symbols
       align: 'left',
       dropShadow: true,
       dropShadowColor: 0x000000,
-      dropShadowBlur: 2,
-      dropShadowDistance: 1,
+      dropShadowBlur: 3,
+      dropShadowDistance: 2,
     });
     
     this.unlockedSymbolsText = new Text('', symbolsStyle);

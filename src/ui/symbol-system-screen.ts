@@ -38,6 +38,7 @@ export class SymbolSystemScreen extends Container {
   constructor() {
     super();
     this.setupScreen();
+    this.setupLevelUpListener();
     this.visible = false;
   }
 
@@ -66,6 +67,23 @@ export class SymbolSystemScreen extends Container {
 
     this.drawBackground();
     this.updateContent();
+  }
+
+  /**
+   * Set up level up event listener to refresh symbol display
+   */
+  private setupLevelUpListener(): void {
+    window.addEventListener('playerLevelUp', (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('🔮 SymbolSystemScreen: Level up event received, refreshing display');
+      console.log('🔮 SymbolSystemScreen: Event details:', customEvent.detail);
+      console.log('🔮 SymbolSystemScreen: Current visible state:', this.visible);
+      
+      // Always refresh, even if not visible, so it's ready when opened
+      this.updateContent();
+      this.createSymbolGrid();
+      console.log('🔮 SymbolSystemScreen: Refresh completed');
+    });
   }
 
   /**

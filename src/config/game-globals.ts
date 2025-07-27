@@ -168,6 +168,9 @@ export class GlobalPlayerState {
    * Emit level up event for UI systems
    */
   private static emitLevelUpEvent(newLevel: number, levelTitle: string, newSymbols: any[]): void {
+    console.log(`🚀 GlobalPlayerState: Emitting level up event - Level ${newLevel}, Title: ${levelTitle}`);
+    console.log(`🚀 GlobalPlayerState: New symbols:`, newSymbols);
+    
     // Create custom event for level up
     const levelUpEvent = new CustomEvent('playerLevelUp', {
       detail: {
@@ -180,6 +183,7 @@ export class GlobalPlayerState {
 
     // Dispatch globally
     window.dispatchEvent(levelUpEvent);
+    console.log(`🚀 GlobalPlayerState: Level up event dispatched successfully`);
   }
 
   /**

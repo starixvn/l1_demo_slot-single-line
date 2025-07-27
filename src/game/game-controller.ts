@@ -561,21 +561,31 @@ export class GameController extends Container {
   private handleXpTest(): void {
     console.log('GameController: XP test button clicked');
     
+    // Log state before adding XP
+    const stateBefore = GlobalPlayerState.getState();
+    console.log(`💫 Before XP: Level ${stateBefore.level}, XP ${stateBefore.xp}`);
+    
     // Award test XP using global state system
     const testXpAmount = 25; // Give 25 XP per click
     GlobalPlayerState.addXP(testXpAmount);
     
     console.log(`💫 Awarded ${testXpAmount} test XP using global state`);
     
+    // Log state after adding XP
+    const stateAfter = GlobalPlayerState.getState();
+    console.log(`💫 After XP: Level ${stateAfter.level}, XP ${stateAfter.xp}`);
+    
+    // Check if level changed
+    if (stateAfter.level > stateBefore.level) {
+      console.log(`🎉 LEVEL UP DETECTED! ${stateBefore.level} → ${stateAfter.level}`);
+    }
+    
     // Update level progression display
     if (this.levelProgressionDisplay) {
       this.levelProgressionDisplay.refresh();
     }
     
-    // Log current global state
-    const globalState = GlobalPlayerState.getState();
-    console.log(`Current Global State: Level ${globalState.level}, XP ${globalState.xp}`);
-    console.log(`XP Progress: ${globalState.xpProgress.current}/${globalState.xpProgress.required} (${globalState.xpProgress.percentage.toFixed(1)}%)`);
+    console.log(`XP Progress: ${stateAfter.xpProgress.current}/${stateAfter.xpProgress.required} (${stateAfter.xpProgress.percentage.toFixed(1)}%)`);
   }
 
 
