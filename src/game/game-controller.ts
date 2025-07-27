@@ -6,6 +6,7 @@ import { PlayerInfoDisplay } from '@/ui/player-info-display';
 import { SettingsPanel } from '@/ui/settings-panel';
 import { LevelProgressionDisplay } from '@/ui/level-progression-display';
 import { LevelUpNotification } from '@/ui/level-up-notification';
+import { SymbolSystemScreen } from '@/ui/symbol-system-screen';
 import { PlayerProgressionManager } from '@/config/level-config';
 import { SymbolGenerator } from '@/config/symbol-config';
 import { GlobalPlayerState } from '@/config/game-globals';
@@ -20,6 +21,7 @@ export class GameController extends Container {
   private testButton!: Container;
   private resetButton!: Container;
   private xpTestButton!: Container;
+
   private buttonContainer!: Container;
   private statusText!: Text;
   private gameLoopManager: GameLoopManager;
@@ -27,6 +29,7 @@ export class GameController extends Container {
   private settingsPanel!: SettingsPanel;
   private levelProgressionDisplay!: LevelProgressionDisplay;
   private levelUpNotification!: LevelUpNotification;
+  private symbolSystemScreen!: SymbolSystemScreen;
   private progressionManager: PlayerProgressionManager;
 
   // Layout configuration based on canvas dimensions
@@ -67,6 +70,11 @@ export class GameController extends Container {
       if (this.levelUpNotification && !this.levelUpNotification.isCurrentlyShowing()) {
         await this.levelUpNotification.showLevelUp(newLevel, levelTitle, newSymbols);
       }
+      
+      // Update symbol system screen if visible
+      if (this.symbolSystemScreen && this.symbolSystemScreen.isVisible()) {
+        this.symbolSystemScreen.refresh();
+      }
     });
 
     // Listen for XP change events for real-time UI updates
@@ -74,6 +82,11 @@ export class GameController extends Container {
       // Update level progression display
       if (this.levelProgressionDisplay) {
         this.levelProgressionDisplay.refresh();
+      }
+      
+      // Update symbol system screen if visible
+      if (this.symbolSystemScreen && this.symbolSystemScreen.isVisible()) {
+        this.symbolSystemScreen.refresh();
       }
     });
   }
@@ -129,6 +142,15 @@ export class GameController extends Container {
     this.levelUpNotification.x = 0; // Center of screen
     this.levelUpNotification.y = 0; // Center of screen
     this.addChild(this.levelUpNotification);
+    
+    // Create symbol system screen (top layer overlay)
+    this.symbolSystemScreen = new SymbolSystemScreen();
+    this.symbolSystemScreen.x = 0; // Center of screen
+    this.symbolSystemScreen.y = 0; // Center of screen
+    this.addChild(this.symbolSystemScreen);
+    
+    // Connect symbol system screen to level progression display
+    this.levelProgressionDisplay.setSymbolSystemScreen(this.symbolSystemScreen);
     
     console.log('GameController: UI components setup complete');
   }
@@ -312,9 +334,9 @@ export class GameController extends Container {
   private createButtons(): void {
     console.log('GameController: Creating buttons...');
     
-    const buttonSpacing = 180; // Equal spacing between buttons for perfect symmetry
+    const buttonSpacing = 180; // Spacing for 4-button layout
     
-    // Spin button (left) - positioned at -1.5 * buttonSpacing for 4-button layout
+    // Spin button (far left) - positioned at -1.5 * buttonSpacing for centered 4-button layout
     this.spinButton = this.createButton('🎰 SPIN 🎰', 0x2ECC71, -buttonSpacing * 1.5, 0);
     this.spinButton.eventMode = 'static';
     this.spinButton.cursor = 'pointer';
@@ -326,7 +348,7 @@ export class GameController extends Container {
     
     console.log('GameController: Spin button created and added to container');
     
-    // Reset button (left-center) - positioned at -0.5 * buttonSpacing
+    // Reset button (left) - positioned at -0.5 * buttonSpacing
     this.resetButton = this.createButton('Reset', 0xE74C3C, -buttonSpacing * 0.5, 0);
     this.resetButton.eventMode = 'static';
     this.resetButton.cursor = 'pointer';
@@ -336,7 +358,9 @@ export class GameController extends Container {
     });
     this.buttonContainer.addChild(this.resetButton);
     
-    // Test win button (right-center) - positioned at +0.5 * buttonSpacing
+
+    
+    // Test win button (right) - positioned at +0.5 * buttonSpacing
     this.testButton = this.createButton('Test Win', 0xF39C12, buttonSpacing * 0.5, 0);
     this.testButton.eventMode = 'static';
     this.testButton.cursor = 'pointer';
@@ -346,7 +370,7 @@ export class GameController extends Container {
     });
     this.buttonContainer.addChild(this.testButton);
     
-    // XP Test button (right) - positioned at +1.5 * buttonSpacing for 4-button layout
+    // XP Test button (far right) - positioned at +1.5 * buttonSpacing for centered 4-button layout
     this.xpTestButton = this.createButton('💫 +XP', 0x9B59B6, buttonSpacing * 1.5, 0);
     this.xpTestButton.eventMode = 'static';
     this.xpTestButton.cursor = 'pointer';
@@ -356,7 +380,7 @@ export class GameController extends Container {
     });
     this.buttonContainer.addChild(this.xpTestButton);
     
-    console.log('GameController: All buttons created successfully');
+    console.log('GameController: All 4 buttons created successfully');
   }
   
   /**
@@ -553,6 +577,8 @@ export class GameController extends Container {
     console.log(`Current Global State: Level ${globalState.level}, XP ${globalState.xp}`);
     console.log(`XP Progress: ${globalState.xpProgress.current}/${globalState.xpProgress.required} (${globalState.xpProgress.percentage.toFixed(1)}%)`);
   }
+
+
   
   /**
    * Get the combat system instance
@@ -586,6 +612,7 @@ export class GameController extends Container {
       case 'x':
         this.handleXpTest();
         break;
+
       case 's':
       case 'escape':
         // Toggle settings panel

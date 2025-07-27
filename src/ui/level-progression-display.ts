@@ -4,6 +4,7 @@ import { GlobalPlayerState, playerLevel, playerXP } from '@/config/game-globals'
 import { GAME_CONSTANTS } from '@/config/game-config';
 import { SYMBOL_CONFIGS } from '@/config/symbol-config';
 import { SymbolType } from '@/types/slot-types';
+import { SymbolSystemScreen } from './symbol-system-screen';
 
 /**
  * Level progression display component showing current level, XP progress, and unlocked symbols
@@ -17,6 +18,7 @@ export class LevelProgressionDisplay extends Container {
   private xpText!: Text;
   private unlockedSymbolsText!: Text;
   private newSymbolsNotification!: Container;
+  private symbolSystemScreen: SymbolSystemScreen | null = null;
 
   // Layout configuration
   private displayWidth: number = 400;
@@ -29,6 +31,32 @@ export class LevelProgressionDisplay extends Container {
     this.setupLevelDisplay();
     this.setupGlobalEventListeners();
     this.updateDisplay();
+  }
+
+  /**
+   * Set the symbol system screen reference for opening it
+   */
+  setSymbolSystemScreen(symbolSystemScreen: SymbolSystemScreen): void {
+    this.symbolSystemScreen = symbolSystemScreen;
+  }
+
+  /**
+   * Handle weapons text click to open symbol system screen
+   */
+  private handleWeaponsClick(): void {
+    console.log('LevelProgressionDisplay: Weapons text clicked');
+    
+    if (this.symbolSystemScreen) {
+      if (this.symbolSystemScreen.isVisible()) {
+        this.symbolSystemScreen.hide();
+        console.log('🔮 Symbol System Screen hidden from level display');
+      } else {
+        this.symbolSystemScreen.show();
+        console.log('🔮 Symbol System Screen opened from level display');
+      }
+    } else {
+      console.warn('Symbol System Screen not available');
+    }
   }
 
   /**
@@ -135,18 +163,30 @@ export class LevelProgressionDisplay extends Container {
     this.xpText = new Text('0 / 100 XP', xpStyle);
     this.addChild(this.xpText);
 
-    // Create unlocked symbols text
+    // Create unlocked symbols text (styled as clickable button)
     const symbolsStyle = new TextStyle({
       fontFamily: 'Arial, sans-serif',
       fontSize: GAME_CONSTANTS.FONT_SIZES.MEDIUM, // Medium text for symbols
-      fontWeight: 'normal',
+      fontWeight: 'bold', // Bold to indicate it's clickable
       fill: 0x00FFFF, // Cyan for symbols
       align: 'left',
+      dropShadow: true,
+      dropShadowColor: 0x000000,
+      dropShadowBlur: 2,
+      dropShadowDistance: 1,
     });
     
     this.unlockedSymbolsText = new Text('', symbolsStyle);
     this.unlockedSymbolsText.x = this.padding;
     this.unlockedSymbolsText.y = this.padding + 120;
+    
+    // Make the weapons text clickable
+    this.unlockedSymbolsText.eventMode = 'static';
+    this.unlockedSymbolsText.cursor = 'pointer';
+    this.unlockedSymbolsText.on('pointerdown', () => {
+      this.handleWeaponsClick();
+    });
+    
     this.addChild(this.unlockedSymbolsText);
 
     // Create new symbols notification container (initially hidden)
@@ -256,7 +296,7 @@ export class LevelProgressionDisplay extends Container {
     // Update unlocked symbols count using global state
     const totalSymbols = Object.keys(SYMBOL_CONFIGS).length;
     const unlockedCount = this.calculateUnlockedSymbolsCount();
-    this.unlockedSymbolsText.text = `🔓 Weapons: ${unlockedCount}/${totalSymbols}`;
+    this.unlockedSymbolsText.text = `🔓 Weapons: ${unlockedCount}/${totalSymbols} ⚔️`;
   }
 
   /**
